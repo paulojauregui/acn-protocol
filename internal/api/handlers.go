@@ -230,15 +230,63 @@ type VoteResponse struct {
 // handleRoot serves the embedded HTML web console.
 //
 // Pre-conditions: s != nil; w != nil; r != nil.
-// Post-conditions: serves uiIndexHTML with Content-Type text/html; charset=utf-8.
+// Post-conditions: serves ui/index.html from uiFS with Content-Type
+// text/html; charset=utf-8 and X-Content-Type-Options: nosniff. If the embedded
+// asset is missing or empty, a minimal fallback HTML document is emitted instead.
 func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	if len(uiIndexHTML) > 0 {
-		_, _ = w.Write(uiIndexHTML)
-	} else {
+	data, err := uiFS.ReadFile("ui/index.html")
+	if err != nil || len(data) == 0 {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("<!DOCTYPE html><html><body><h1>ACN Protocol Console</h1></body></html>"))
+		return
 	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
+}
+
+// handleUIAsset serves an additional embedded static asset (stylesheet, script, or
+// supplementary HTML document) from the uiFS embedded filesystem.
+//
+// Pre-conditions: s != nil; w != nil; r != nil; r is routed via "GET /ui/{asset...}".
+// Post-conditions:
+//   - On unknown, empty, or path-traversal asset names, responds HTTP 404 with a JSON
+//     error payload and performs no further writes.
+//   - On success, responds HTTP 200 with the embedded bytes, a Content-Type derived from
+//     the asset extension, Cache-Control: public, max-age=300, and
+//     X-Content-Type-Options: nosniff.
+func (s *Server) handleUIAsset(w http.ResponseWriter, r *http.Request) {
+	asset := strings.TrimSpace(r.PathValue("asset"))
+	if asset == "" || strings.Contains(asset, "..") || strings.HasPrefix(asset, "/") || strings.Contains(asset, "\\") {
+		writeError(w, http.StatusNotFound, "ui asset not found")
+		return
+	}
+
+	data, err := uiFS.ReadFile("ui/" + asset)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "ui asset not found")
+		return
+	}
+
+	contentType := "application/octet-stream"
+	switch {
+	case strings.HasSuffix(asset, ".css"):
+		contentType = "text/css; charset=utf-8"
+	case strings.HasSuffix(asset, ".js"):
+		contentType = "application/javascript; charset=utf-8"
+	case strings.HasSuffix(asset, ".html"):
+		contentType = "text/html; charset=utf-8"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(data)
 }
 
 // handleHealthz responds to container liveness probes.

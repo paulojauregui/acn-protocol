@@ -1,12 +1,17 @@
 package api_test
 
 import (
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
 	"unicode"
+
+	"github.com/paulojauregui/acn-protocol/internal/api"
 )
 
 // readUIAsset loads a UI stylesheet from disk relative to the current test directory
@@ -326,6 +331,86 @@ func TestUIAssets_ComponentsNoRawHexColors(t *testing.T) {
 		if hexColorRegex.MatchString(trimmed) {
 			t.Errorf("line %d: detected raw hex color literal in components.css: %q (must use var(--token))",
 				lineIdx+1, trimmed)
+		}
+	}
+}
+
+// TestServer_EmbeddedUIAssetRoutes verifies that the multi-file embed.FS route
+// "GET /ui/{asset...}" serves the embedded stylesheets with the correct caching and
+// sniffing headers, and rejects unknown or unsafe asset names with HTTP 404.
+//
+// Pre-conditions:
+//   - internal/api/ui/tokens.css and internal/api/ui/components.css are embedded into
+//     the api package at build time and are non-empty.
+//
+// Post-conditions:
+//   - GET /ui/tokens.css and GET /ui/components.css return 200 OK with
+//     Content-Type: text/css; charset=utf-8, Cache-Control: public, max-age=300,
+//     X-Content-Type-Options: nosniff, and a non-empty body.
+//   - GET /ui/nonexistent.css returns 404 Not Found.
+//   - Path-traversal and absolute-path asset names return 404 Not Found.
+func TestServer_EmbeddedUIAssetRoutes(t *testing.T) {
+	s := api.NewServer()
+	ts := httptest.NewServer(s.Handler())
+	defer ts.Close()
+
+	// 1. Embedded stylesheets are served with the contract headers.
+	cssAssets := []string{"tokens.css", "components.css"}
+	for _, asset := range cssAssets {
+		resp, err := http.Get(ts.URL + "/ui/" + asset)
+		if err != nil {
+			t.Fatalf("GET /ui/%s failed: %v", asset, err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			t.Fatalf("GET /ui/%s: expected 200 OK, got %d", asset, resp.StatusCode)
+		}
+		if got := resp.Header.Get("Content-Type"); got != "text/css; charset=utf-8" {
+			t.Errorf("GET /ui/%s: expected Content-Type %q, got %q", asset, "text/css; charset=utf-8", got)
+		}
+		if got := resp.Header.Get("Cache-Control"); got != "public, max-age=300" {
+			t.Errorf("GET /ui/%s: expected Cache-Control %q, got %q", asset, "public, max-age=300", got)
+		}
+		if got := resp.Header.Get("X-Content-Type-Options"); got != "nosniff" {
+			t.Errorf("GET /ui/%s: expected X-Content-Type-Options %q, got %q", asset, "nosniff", got)
+		}
+
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			t.Fatalf("GET /ui/%s: failed reading body: %v", asset, readErr)
+		}
+		if len(body) == 0 {
+			t.Errorf("GET /ui/%s: expected non-empty body, got 0 bytes", asset)
+		}
+	}
+
+	// 2. Unknown assets return 404 Not Found.
+	resp, err := http.Get(ts.URL + "/ui/nonexistent.css")
+	if err != nil {
+		t.Fatalf("GET /ui/nonexistent.css failed: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("GET /ui/nonexistent.css: expected 404 Not Found, got %d", resp.StatusCode)
+	}
+
+	// 3. Unsafe asset names are rejected before touching the embedded filesystem.
+	unsafePaths := []string{
+		ts.URL + "/ui/../server.go",
+		ts.URL + "/ui/%2e%2e/server.go",
+		ts.URL + "/ui/..%2f..%2fgo.mod",
+		ts.URL + "/ui/",
+	}
+	for _, target := range unsafePaths {
+		badResp, badErr := http.Get(target)
+		if badErr != nil {
+			t.Fatalf("GET %s failed: %v", target, badErr)
+		}
+		badResp.Body.Close()
+		if badResp.StatusCode != http.StatusNotFound {
+			t.Errorf("GET %s: expected 404 Not Found, got %d", target, badResp.StatusCode)
 		}
 	}
 }
