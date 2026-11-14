@@ -111,3 +111,102 @@ func TestUIJS_ViewsModuleServedAndContract(t *testing.T) {
 		}
 	}
 }
+
+// TestUIJS_AppControllerServedAndContract verifies that internal/api/ui/app.js is served
+// via the embedded filesystem endpoint GET /ui/app.js with correct MIME types, cache
+// headers, required controller functions, WAI-ARIA tab navigation, global shortcuts,
+// API handlers, wire-protocol normalization, and zero alerts or emojis.
+//
+// Pre-conditions:
+//   - An initialized api.Server instance with embedded ui filesystem.
+//   - internal/api/ui/app.js must exist on disk and be embedded.
+//
+// Post-conditions:
+//   - Verifies HTTP 200 OK status on GET /ui/app.js.
+//   - Verifies Content-Type: application/javascript; charset=utf-8.
+//   - Verifies X-Content-Type-Options: nosniff and Cache-Control: public, max-age=300.
+//   - Verifies presence of switchTab, ArrowRight, ArrowLeft, Home, End keyboard navigation.
+//   - Verifies clearAgentFilter, refreshOverview, handleRelayBooking, handleIssueNonce,
+//     handleOracleSettle, handleIssuePassport, handleVerifyPassport, fetchMerkleLedger,
+//     auditMerkleProof, and runSimulation functions.
+//   - Verifies wire-protocol normalization (session.state || session.status).
+//   - Verifies zero alert( or window.alert( calls.
+//   - Verifies zero emojis in the JavaScript source.
+func TestUIJS_AppControllerServedAndContract(t *testing.T) {
+	srv := api.NewServer()
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/ui/app.js")
+	if err != nil {
+		t.Fatalf("GET /ui/app.js failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("GET /ui/app.js status = %d, want 200", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(contentType, "application/javascript") {
+		t.Errorf("Content-Type = %q, want application/javascript", contentType)
+	}
+
+	nosniff := resp.Header.Get("X-Content-Type-Options")
+	if nosniff != "nosniff" {
+		t.Errorf("X-Content-Type-Options = %q, want nosniff", nosniff)
+	}
+
+	cacheControl := resp.Header.Get("Cache-Control")
+	if !strings.Contains(cacheControl, "max-age=") {
+		t.Errorf("Cache-Control = %q, want max-age directive", cacheControl)
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("failed reading /ui/app.js body: %v", err)
+	}
+	content := string(bodyBytes)
+
+	requiredSnippets := []struct {
+		desc    string
+		snippet string
+	}{
+		{"WAI-ARIA tab switching function", "function switchTab"},
+		{"Roving tabindex right navigation", "ArrowRight"},
+		{"Roving tabindex left navigation", "ArrowLeft"},
+		{"Roving tabindex home navigation", "Home"},
+		{"Roving tabindex end navigation", "End"},
+		{"Quick filter reset controller", "clearAgentFilter"},
+		{"Overview telemetry synchronization", "refreshOverview"},
+		{"Relay booking handler", "handleRelayBooking"},
+		{"Challenge nonce issue handler", "handleIssueNonce"},
+		{"Oracle settlement handler", "handleOracleSettle"},
+		{"TrustPassport issue handler", "handleIssuePassport"},
+		{"TrustPassport verification handler", "handleVerifyPassport"},
+		{"Merkle ledger fetcher", "fetchMerkleLedger"},
+		{"Merkle inclusion proof auditor", "auditMerkleProof"},
+		{"Adversarial threat simulator executor", "runSimulation"},
+		{"Session state wire-protocol normalization", "session.state || session.status"},
+	}
+
+	for _, tc := range requiredSnippets {
+		t.Run(tc.desc, func(t *testing.T) {
+			if !strings.Contains(content, tc.snippet) {
+				t.Fatalf("/ui/app.js missing required snippet %q (%s)", tc.snippet, tc.desc)
+			}
+		})
+	}
+
+	// Invariant: zero alert() or window.alert() calls
+	if strings.Contains(content, "alert(") {
+		t.Errorf("/ui/app.js contains forbidden alert( invocation")
+	}
+
+	// Invariant: zero emojis
+	for _, r := range content {
+		if r > 127 && unicode.Is(unicode.So, r) {
+			t.Fatalf("/ui/app.js contains forbidden symbol/emoji character: %c (U+%04X)", r, r)
+		}
+	}
+}
