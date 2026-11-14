@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package acn.v1;
+
+option go_package = "github.com/paulojauregui/acn-protocol/proto/acn/v1;acnv1";
+
+// IdentityRegistry manages Sovereign Root DIDs, rotating unlinkable Sub-Agent DIDs,
+// and the 4-Tier Trust Ladder.
+service IdentityRegistry {
+  rpc RegisterRootAgent(RegisterRootAgentRequest) returns (RegisterRootAgentResponse);
+  rpc SpawnSubAgent(SpawnSubAgentRequest) returns (SpawnSubAgentResponse);
+  rpc ResolveTrustTier(TrustRequest) returns (TrustResponse);
+}
+
+// ReputationOracle computes Weight-of-Stake endorsements, Time-Weighted Velocity bounds,
+// issues 60-second challenge nonces, and executes Double-Blind physical settlement.
+service ReputationOracle {
+  rpc EvaluateTrust(TrustRequest) returns (TrustResponse);
+  rpc IssueChallengeNonce(ChallengeNonceRequest) returns (ChallengeNonceResponse);
+  rpc SettleAppointment(SettlementRequest) returns (SettlementResponse);
+  rpc StreamPresenceHandshake(stream PresenceHandshakeFrame) returns (stream PresenceHandshakeFrame);
+}
+
+// AgentRelay mediates SIP-style Agent-to-Agent booking requests with pre-answer
+// TrustPassport verification and Blind Escrow bond locking.
+service AgentRelay {
+  rpc NegotiateBooking(BookingNegotiationRequest) returns (BookingNegotiationResponse);
+}
+
+enum TrustTier {
+  TRUST_TIER_UNSPECIFIED = 0;
+  TRUST_TIER_0_EPHEMERAL = 1;
+  TRUST_TIER_1_ECONOMIC = 2;
+  TRUST_TIER_2_REPUTATIONAL = 3;
+  TRUST_TIER_3_SOVEREIGN = 4;
+}
+
+enum SettlementStatus {
+  SETTLEMENT_STATUS_UNSPECIFIED = 0;
+  SETTLEMENT_STATUS_SUCCESS = 1;
+  SETTLEMENT_STATUS_SLASHED = 2;
+  SETTLEMENT_STATUS_DISPUTED = 3;
+}
+
+message RegisterRootAgentRequest {
+  string display_name = 1;
+  bytes public_key = 2;
+  bool pop_verified = 3;
+  bool tee_attested = 4;
+}
+
+message RegisterRootAgentResponse {
+  string root_did = 1;
+  TrustTier trust_tier = 2;
+  double max_transaction_usd = 3;
+}
+
+message SpawnSubAgentRequest {
+  string root_did = 1;
+  string purpose = 2;
+  bytes signature = 3;
+}
+
+message SpawnSubAgentResponse {
+  string sub_did = 1;
+  string parent_root_did = 2;
+  int64 expires_at_unix = 3;
+}
+
+message TrustRequest {
+  string agent_did = 1;
+  double requested_exposure_usd = 2;
+}
+
+message TrustResponse {
+  string root_did = 1;
+  double composite_score = 2;
+  TrustTier trust_tier = 3;
+  bool probationary = 4;
+  double max_tier_exposure_usd = 5;
+  double velocity_capacity_usd = 6;
+  bool eligible_for_exposure = 7;
+}
+
+message ChallengeNonceRequest {
+  string appointment_id = 1;
+  string sub_agent_did = 2;
+  string vendor_did = 3;
+}
+
+message ChallengeNonceResponse {
+  string nonce = 1;
+  string appointment_id = 2;
+  int64 issued_at_unix = 3;
+  int64 expires_at_unix = 4;
+}
+
+message PresenceHandshakeFrame {
+  string appointment_id = 1;
+  string nonce = 2;
+  string sender_did = 3;
+  bytes signature = 4;
+  bool present = 5;
+  int64 timestamp_unix = 6;
+}
+
+message SettlementRequest {
+  string appointment_id = 1;
+  string lock_id = 2;
+  string nonce = 3;
+  string user_did = 4;
+  string vendor_did = 5;
+  bool user_present = 6;
+  bytes user_signature = 7;
+  bool vendor_present = 8;
+  bytes vendor_signature = 9;
+  bool stripe_pos_receipt = 10;
+  bool local_beacon_verified = 11;
+}
+
+message SettlementResponse {
+  string appointment_id = 1;
+  SettlementStatus status = 2;
+  double bond_released_usd = 3;
+  double network_fee_usd = 4;
+  double vendor_compensation_usd = 5;
+  double arbitration_fee_usd = 6;
+  string jury_verdict_reason = 7;
+  string merkle_leaf_hash = 8;
+}
+
+message BookingNegotiationRequest {
+  string caller_did = 1;
+  string vendor_did = 2;
+  string service_description = 3;
+  double bond_amount_usd = 4;
+  double vendor_min_score = 5;
+  TrustTier vendor_required_tier = 6;
+}
+
+message BookingNegotiationResponse {
+  string session_id = 1;
+  string state = 2;
+  string lock_id = 3;
+  bool confirmed = 4;
+  string rejection_reason = 5;
+}
