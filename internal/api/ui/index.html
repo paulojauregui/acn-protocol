@@ -2,539 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ACN Protocol | RaaS &amp; Attack Simulator Web Console</title>
-  <style>
-    :root {
-      --bg-dark: #0a0e17;
-      --bg-panel: #111827;
-      --bg-card: #162032;
-      --bg-input: #0d1522;
-      --border-color: #1f2d44;
-      --border-active: #38bdf8;
-      --text-main: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --accent-blue: #38bdf8;
-      --accent-green: #22c55e;
-      --accent-amber: #f59e0b;
-      --accent-red: #ef4444;
-      --accent-purple: #a855f7;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-dark);
-      color: var(--text-main);
-      font-family: var(--font-sans);
-      font-size: 14px;
-      line-height: 1.5;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    header {
-      background-color: var(--bg-panel);
-      border-bottom: 1px solid var(--border-color);
-      padding: 16px 24px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .brand h1 {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      color: var(--accent-blue);
-      text-transform: uppercase;
-    }
-
-    .brand p {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .top-telemetry {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .pill {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .pill-label {
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-    }
-
-    .pill-val {
-      font-family: var(--font-mono);
-      font-weight: 600;
-      color: var(--text-main);
-    }
-
-    .pill-val.green { color: var(--accent-green); }
-    .pill-val.blue { color: var(--accent-blue); }
-    .pill-val.amber { color: var(--accent-amber); }
-
-    nav.tab-bar {
-      background-color: var(--bg-panel);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      overflow-x: auto;
-      padding: 0 24px;
-      gap: 4px;
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--text-muted);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 12px 16px;
-      white-space: nowrap;
-      transition: all 0.15s ease-in-out;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-
-    .tab-btn:hover {
-      color: var(--text-main);
-    }
-
-    .tab-btn.active {
-      color: var(--accent-blue);
-      border-bottom-color: var(--accent-blue);
-    }
-
-    main {
-      flex: 1;
-      padding: 24px;
-      max-width: 1440px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .tab-content {
-      display: none;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .tab-content.active {
-      display: flex;
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 20px;
-    }
-
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    .grid-4 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    .card {
-      background-color: var(--bg-panel);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .card-title {
-      font-size: 14px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--accent-blue);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 8px;
-    }
-
-    .stat-box {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 14px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      margin-bottom: 4px;
-    }
-
-    .stat-val {
-      font-family: var(--font-mono);
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    th {
-      text-align: left;
-      padding: 10px 12px;
-      background-color: var(--bg-card);
-      color: var(--text-dim);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border-color);
-      color: var(--text-main);
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    .table-responsive {
-      overflow-x: auto;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      font-family: var(--font-mono);
-    }
-
-    .badge-t0 { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
-    .badge-t1 { background: #0c4a6e; color: #38bdf8; border: 1px solid #0369a1; }
-    .badge-t2 { background: #3b0764; color: #c084fc; border: 1px solid #6b21a8; }
-    .badge-t3 { background: #14532d; color: #4ade80; border: 1px solid #166534; }
-    .badge-vendor { background: #451a03; color: #fb923c; border: 1px solid #9a3412; }
-    .badge-success { background: #14532d; color: #4ade80; }
-    .badge-danger { background: #450a0a; color: #f87171; }
-    .badge-warning { background: #451a03; color: #facc15; }
-
-    .code-span {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: var(--accent-blue);
-      background-color: var(--bg-card);
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      font-weight: 600;
-    }
-
-    .form-control {
-      background-color: var(--bg-input);
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      color: var(--text-main);
-      padding: 8px 12px;
-      font-size: 13px;
-      outline: none;
-      font-family: var(--font-sans);
-    }
-
-    .form-control:focus {
-      border-color: var(--accent-blue);
-    }
-
-    select.form-control {
-      cursor: pointer;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .form-check {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .form-check input[type="checkbox"] {
-      cursor: pointer;
-      accent-color: var(--accent-blue);
-    }
-
-    .btn {
-      background-color: var(--accent-blue);
-      color: #04101e;
-      border: none;
-      border-radius: 6px;
-      padding: 10px 16px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      transition: background-color 0.15s;
-    }
-
-    .btn:hover {
-      background-color: #7dd3fc;
-    }
-
-    .btn-secondary {
-      background-color: var(--bg-card);
-      color: var(--text-main);
-      border: 1px solid var(--border-color);
-    }
-
-    .btn-secondary:hover {
-      background-color: var(--border-color);
-    }
-
-    .btn-danger {
-      background-color: var(--accent-red);
-      color: #ffffff;
-    }
-
-    .btn-danger:hover {
-      background-color: #f87171;
-    }
-
-    .btn-sm {
-      padding: 4px 8px;
-      font-size: 11px;
-    }
-
-    pre.json-viewer {
-      background-color: #070a10;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      padding: 12px;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      color: #38bdf8;
-      overflow-x: auto;
-      max-height: 280px;
-    }
-
-    /* State Machine Visualizer */
-    .stepper {
-      display: flex;
-      justify-content: space-between;
-      position: relative;
-      margin: 16px 0 24px 0;
-    }
-
-    .stepper::before {
-      content: "";
-      position: absolute;
-      top: 15px;
-      left: 20px;
-      right: 20px;
-      height: 2px;
-      background: var(--border-color);
-      z-index: 1;
-    }
-
-    .step-node {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      width: 140px;
-    }
-
-    .step-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--bg-card);
-      border: 2px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 12px;
-      color: var(--text-dim);
-    }
-
-    .step-node.completed .step-circle {
-      border-color: var(--accent-green);
-      background: #14532d;
-      color: #4ade80;
-    }
-
-    .step-node.active .step-circle {
-      border-color: var(--accent-blue);
-      background: #0c4a6e;
-      color: #38bdf8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-    }
-
-    .step-node.failed .step-circle {
-      border-color: var(--accent-red);
-      background: #450a0a;
-      color: #f87171;
-    }
-
-    .step-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      font-weight: 600;
-      color: var(--text-dim);
-      text-align: center;
-    }
-
-    .step-node.active .step-title,
-    .step-node.completed .step-title {
-      color: var(--text-main);
-    }
-
-    .step-node.failed .step-title {
-      color: var(--accent-red);
-    }
-
-    /* Attack Lab cards */
-    .attack-card {
-      background-color: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .attack-card.active-attack {
-      border-color: var(--accent-amber);
-    }
-
-    .attack-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .attack-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .attack-desc {
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-
-    .attack-defense {
-      font-size: 12px;
-      color: var(--accent-blue);
-      background: #082f49;
-      border: 1px solid #0369a1;
-      border-radius: 4px;
-      padding: 6px 10px;
-    }
-
-    footer {
-      background-color: var(--bg-panel);
-      border-top: 1px solid var(--border-color);
-      padding: 12px 24px;
-      font-size: 11px;
-      color: var(--text-dim);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ACN Protocol &mdash; Sovereign Trust &amp; Escrow Console</title>
+  <link rel="stylesheet" href="/ui/tokens.css">
+  <link rel="stylesheet" href="/ui/components.css">
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Skip to main console</a>
+  <div id="sr-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- Top Bar -->
-  <header>
+  <header role="banner">
     <div class="brand">
       <h1>ACN Protocol Engineering Console</h1>
-      <p>Reputation-as-a-Service (RaaS) &amp; Deterministic Escrow Control Plane</p>
+      <p>Sovereign Cryptographic Trust-and-Escrow Mission Control</p>
     </div>
     <div class="top-telemetry">
       <div class="pill">
         <span class="pill-label">Status</span>
-        <span class="pill-val green" id="pill-status">ONLINE</span>
+        <span class="pill-val green" id="pill-status" data-state="nominal">ONLINE</span>
       </div>
       <div class="pill">
         <span class="pill-label">Merkle Root</span>
@@ -556,24 +41,21 @@
         <span class="pill-label">Treasury Fees</span>
         <span class="pill-val green" id="pill-treasury-fees">$0.00</span>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="refreshOverview()">Refresh</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-refresh-overview" onclick="refreshOverview()">Refresh Telemetry</button>
     </div>
   </header>
 
-  <!-- Navigation Tab Bar -->
-  <nav class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('tab-overview', this)">1. Network Overview &amp; DID Directory</button>
-    <button class="tab-btn" onclick="switchTab('tab-relay', this)">2. Live Relay &amp; Escrow Negotiator</button>
-    <button class="tab-btn" onclick="switchTab('tab-oracle', this)">3. Accountability Oracle &amp; Check-In</button>
-    <button class="tab-btn" onclick="switchTab('tab-raas', this)">4. RaaS Passport &amp; Merkle Ledger</button>
-    <button class="tab-btn" onclick="switchTab('tab-threat', this)">5. Adversarial Threat Model Lab</button>
+  <nav class="tab-bar" id="console-tablist" role="tablist" aria-label="Console Primary Views">
+    <button type="button" class="tab-btn active" id="tab-btn-overview" role="tab" aria-selected="true" aria-controls="tab-overview" tabindex="0" onclick="switchTab('tab-overview', this)">1. Network Overview &amp; DID Directory</button>
+    <button type="button" class="tab-btn" id="tab-btn-relay" role="tab" aria-selected="false" aria-controls="tab-relay" tabindex="-1" onclick="switchTab('tab-relay', this)">2. Live Relay &amp; Escrow Negotiator</button>
+    <button type="button" class="tab-btn" id="tab-btn-oracle" role="tab" aria-selected="false" aria-controls="tab-oracle" tabindex="-1" onclick="switchTab('tab-oracle', this)">3. Accountability Oracle &amp; Check-In</button>
+    <button type="button" class="tab-btn" id="tab-btn-raas" role="tab" aria-selected="false" aria-controls="tab-raas" tabindex="-1" onclick="switchTab('tab-raas', this)">4. RaaS Passport &amp; Merkle Ledger</button>
+    <button type="button" class="tab-btn" id="tab-btn-threat" role="tab" aria-selected="false" aria-controls="tab-threat" tabindex="-1" onclick="switchTab('tab-threat', this)">5. Adversarial Threat Model Lab</button>
   </nav>
 
-  <!-- Main Content Container -->
-  <main>
-
+  <main id="main-content" role="main" tabindex="-1">
     <!-- TAB 1: Network Overview & Sovereign DID Directory -->
-    <div id="tab-overview" class="tab-content active">
+    <section id="tab-overview" class="tab-content active" role="tabpanel" aria-labelledby="tab-btn-overview">
       <div class="grid-4">
         <div class="stat-box">
           <div class="stat-label">Total Escrow Locked</div>
@@ -585,160 +67,95 @@
         </div>
         <div class="stat-box">
           <div class="stat-label">Treasury Fees Accumulated</div>
-          <div class="stat-val" style="color: var(--accent-green);" id="stat-fees-usd">$0.00</div>
+          <div class="stat-val" id="stat-fees-usd">$0.00</div>
         </div>
         <div class="stat-box">
           <div class="stat-label">Collateral Slashed</div>
-          <div class="stat-val" style="color: var(--accent-red);" id="stat-slashed-usd">$0.00</div>
+          <div class="stat-val" id="stat-slashed-usd">$0.00</div>
         </div>
       </div>
 
-      <!-- 4-Tier Trust Ladder Reference -->
       <div class="card">
-        <div class="card-title">
-          <span>ACN 4-Tier Sovereign Trust Ladder</span>
-          <span style="font-size: 11px; color: var(--text-dim); text-transform: none;">Collateral &amp; Velocity Requirements</span>
-        </div>
+        <div class="card-title">ACN 4-Tier Sovereign Trust Ladder (Collateral &amp; Velocity Requirements)</div>
         <div class="table-responsive">
           <table>
             <thead>
-              <tr>
-                <th>Tier</th>
-                <th>Classification</th>
-                <th>Min Bond</th>
-                <th>Min Spend</th>
-                <th>Settled Tx</th>
-                <th>Max Exposure</th>
-                <th>Cryptographic Primitives</th>
-              </tr>
+              <tr><th>Trust Tier</th><th>Min Bond</th><th>Min Spend</th><th>Settled Tx</th><th>Max Exposure</th><th>Attestation Prerequisites</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td><span class="badge badge-t0">Tier 0</span></td>
-                <td>Ephemeral Agent</td>
-                <td>$0.00</td>
-                <td>$0.00</td>
-                <td>0</td>
-                <td>$10.00</td>
-                <td>ECDSA Keypair, Unbonded</td>
-              </tr>
-              <tr>
-                <td><span class="badge badge-t1">Tier 1</span></td>
-                <td>Economic Commuter</td>
-                <td>$50.00</td>
-                <td>$100.00</td>
-                <td>5</td>
-                <td>$100.00</td>
-                <td>Good-Behavior Bond Locked</td>
-              </tr>
-              <tr>
-                <td><span class="badge badge-t2">Tier 2</span></td>
-                <td>Reputational Traveler</td>
-                <td>$100.00</td>
-                <td>$500.00</td>
-                <td>20</td>
-                <td>$500.00</td>
-                <td>Longitudinal Reputation History</td>
-              </tr>
-              <tr>
-                <td><span class="badge badge-t3">Tier 3</span></td>
-                <td>Sovereign Executive</td>
-                <td>$500.00</td>
-                <td>$2,000.00</td>
-                <td>30</td>
-                <td>$2,500.00</td>
-                <td>Proof-of-Personhood + TEE Attested Enclave</td>
-              </tr>
+              <tr><td><span class="badge badge-t0">Tier 0 (Ephemeral)</span></td><td>$0.00</td><td>$0.00</td><td>0</td><td>$10.00</td><td>Ed25519 Root DID generation only</td></tr>
+              <tr><td><span class="badge badge-t1">Tier 1 (Economic)</span></td><td>$50.00</td><td>$100.00</td><td>1</td><td>$250.00</td><td>Bond locked in ACN Escrow Vault</td></tr>
+              <tr><td><span class="badge badge-t2">Tier 2 (Reputational)</span></td><td>$100.00</td><td>$500.00</td><td>5</td><td>$1,000.00</td><td>Longitudinal history + RaaS Enclave attestation</td></tr>
+              <tr><td><span class="badge badge-t3">Tier 3 (Sovereign)</span></td><td>$500.00</td><td>$2,000.00</td><td>20</td><td>$10,000.00</td><td>Proof-of-Presence (PoP) + TEE Hardware Attestation</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Directory Table -->
-      <div class="card">
-        <div class="card-title">
-          <span>Sovereign Root Agents &amp; Merchant Vendors</span>
-          <button class="btn btn-secondary btn-sm" onclick="fetchAgents()">Refresh Directory</button>
+      <div class="status-banner" id="directory-status-banner" role="status" aria-live="polite" data-state="nominal">Directory ready. Use / or Ctrl+K to filter agents.</div>
+
+      <div class="filter-toolbar">
+        <div class="filter-group">
+          <label for="agent-filter-input">Filter Directory:</label>
+          <input type="search" class="form-control" id="agent-filter-input" placeholder="Filter by name, DID, or tier (/ or Ctrl+K)..." oninput="filterAgents(this.value)">
         </div>
-        <div class="table-responsive">
-          <table id="agents-table">
-            <thead>
-              <tr>
-                <th>Name / Type</th>
-                <th>Root DID</th>
-                <th>Trust Tier</th>
-                <th>Bond / Spend</th>
-                <th>Settled</th>
-                <th>Reputation</th>
-                <th>Attestations</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="agents-table-body">
-              <tr><td colspan="8" style="text-align: center; color: var(--text-dim);">Loading agent registry...</td></tr>
-            </tbody>
-          </table>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-filter" onclick="clearAgentFilter()">Clear Filter</button>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">Sovereign Root Agents &amp; Merchant Vendors</div>
+          <div class="table-responsive">
+            <table id="agents-table">
+              <thead>
+                <tr><th>Identity</th><th>Role</th><th>Tier</th><th>Bond</th><th>Reputation</th></tr>
+              </thead>
+              <tbody id="agents-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Active Rotating Sub-Agents (Unlinkable Ephemeral DIDs)</div>
+          <div class="table-responsive">
+            <table>
+              <thead>
+                <tr><th>Sub-Agent DID</th><th>Parent Root DID</th><th>Scope</th><th>Expires</th></tr>
+              </thead>
+              <tbody id="subagents-table-body"></tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      <!-- Sub-Agents Directory Table -->
-      <div class="card">
-        <div class="card-title">
-          <span>Active Ephemeral Rotating Sub-Agents</span>
-        </div>
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Sub-Agent DID</th>
-                <th>Parent Root DID</th>
-                <th>Purpose / Delegation Scope</th>
-                <th>Created At</th>
-                <th>Expires At</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="subagents-table-body">
-              <tr><td colspan="6" style="text-align: center; color: var(--text-dim);">Loading active sub-agents...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Registration & Minting Forms -->
       <div class="grid-3">
         <div class="card">
-          <div class="card-title">Register Sovereign Root Agent</div>
+          <div class="card-title">Register Root Agent</div>
           <form onsubmit="handleRegisterAgent(event)">
             <div class="form-group">
-              <label>Agent Display Name</label>
-              <input type="text" class="form-control" id="reg-name" required placeholder="e.g. David Corporate Concierge">
+              <label for="reg-name">Display Name</label>
+              <input type="text" class="form-control" id="reg-name" required placeholder="e.g. Dana">
             </div>
             <div class="form-group">
-              <label>Agent Role</label>
+              <label for="reg-vendor">Agent Role / Type</label>
               <select class="form-control" id="reg-vendor">
-                <option value="false">Sovereign User Agent</option>
-                <option value="true">Merchant Vendor Service</option>
+                <option value="false">Autonomous Commuter Agent (User)</option>
+                <option value="true">Merchant Service Provider (Vendor)</option>
               </select>
             </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Deposit Bond (USD)</label>
-                <input type="number" class="form-control" id="reg-bond" min="0" step="10" value="100">
-              </div>
-              <div class="form-group">
-                <label>Verification Badges</label>
-                <div class="form-check">
-                  <input type="checkbox" id="reg-pop">
-                  <label for="reg-pop">PoP Verified</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="reg-tee">
-                  <label for="reg-tee">TEE Attested</label>
-                </div>
-              </div>
+            <div class="form-group">
+              <label for="reg-bond">Initial Good-Behavior Bond (USD)</label>
+              <input type="number" class="form-control" id="reg-bond" step="1" min="0" value="50" required>
             </div>
-            <button type="submit" class="btn" style="width: 100%;">Register Root Agent</button>
+            <div class="form-check">
+              <input type="checkbox" id="reg-pop">
+              <label for="reg-pop">Proof-of-Presence (PoP) Verified</label>
+            </div>
+            <div class="form-check">
+              <input type="checkbox" id="reg-tee">
+              <label for="reg-tee">TEE Hardware Attestation Present</label>
+            </div>
+            <button type="submit" class="btn">Register Root Agent</button>
           </form>
         </div>
 
@@ -746,20 +163,20 @@
           <div class="card-title">Spawn Rotating Sub-Agent</div>
           <form onsubmit="handleSpawnSubAgent(event)">
             <div class="form-group">
-              <label>Parent Root DID</label>
+              <label for="spawn-parent">Parent Root DID</label>
               <select class="form-control" id="spawn-parent" required>
-                <option value="">Select Root Agent...</option>
+                <option value="">Select Parent DID...</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Purpose / Scope</label>
-              <input type="text" class="form-control" id="spawn-purpose" required placeholder="e.g. autonomous-ride-hailing">
+              <label for="spawn-purpose">Delegation Purpose / Scope</label>
+              <input type="text" class="form-control" id="spawn-purpose" value="ephemeral-commuter-booking" required>
             </div>
             <div class="form-group">
-              <label>TTL Duration (Seconds)</label>
-              <input type="number" class="form-control" id="spawn-ttl" value="86400" min="60" step="60">
+              <label for="spawn-ttl">TTL Duration (Seconds)</label>
+              <input type="number" class="form-control" id="spawn-ttl" min="60" max="86400" value="3600" required>
             </div>
-            <button type="submit" class="btn" style="width: 100%;">Spawn Sub-Agent</button>
+            <button type="submit" class="btn">Spawn Rotating Sub-Agent</button>
           </form>
         </div>
 
@@ -767,1180 +184,299 @@
           <div class="card-title">Deposit Good-Behavior Bond</div>
           <form onsubmit="handleDepositBond(event)">
             <div class="form-group">
-              <label>Target Agent DID</label>
+              <label for="deposit-did">Agent DID</label>
               <select class="form-control" id="deposit-did" required>
-                <option value="">Select Agent...</option>
+                <option value="">Select Target DID...</option>
               </select>
             </div>
             <div class="form-group">
-              <label>Deposit Amount (USD)</label>
-              <input type="number" class="form-control" id="deposit-amount" min="10" step="10" value="100" required>
+              <label for="deposit-amount">Deposit Amount (USD)</label>
+              <input type="number" class="form-control" id="deposit-amount" min="1" step="1" value="100" required>
             </div>
-            <button type="submit" class="btn btn-secondary" style="width: 100%; margin-top: 26px;">Deposit Collateral</button>
+            <button type="submit" class="btn">Deposit Collateral</button>
           </form>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- TAB 2: Live Agent Relay & Blind Escrow Negotiator -->
-    <div id="tab-relay" class="tab-content">
-      <div class="card">
-        <div class="card-title">
-          <span>Agent-to-Agent Blind Escrow Negotiation Protocol</span>
-          <span style="font-size: 11px; color: var(--text-dim); text-transform: none;">Pre-Answer Trust Gating</span>
-        </div>
-        <p style="color: var(--text-muted); font-size: 13px;">
-          Vendors enforce minimum Trust Tiers and Composite Reputation thresholds before accepting incoming connection handshakes.
-          Upon validation, caller collateral is locked in the Escrow Vault under a unique Lock ID.
-        </p>
-
-        <!-- 4-Phase State Machine Diagram -->
-        <div class="stepper" id="relay-stepper">
-          <div class="step-node" id="step-1">
-            <div class="step-circle">1</div>
-            <div class="step-title">INITIATED</div>
-          </div>
-          <div class="step-node" id="step-2">
-            <div class="step-circle">2</div>
-            <div class="step-title">REPUTATION VERIFIED</div>
-          </div>
-          <div class="step-node" id="step-3">
-            <div class="step-circle">3</div>
-            <div class="step-title">ESCROW LOCKED</div>
-          </div>
-          <div class="step-node" id="step-4">
-            <div class="step-circle">4</div>
-            <div class="step-title">CONFIRMED</div>
-          </div>
-        </div>
+    <section id="tab-relay" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-relay" hidden>
+      <div class="stepper" id="relay-stepper">
+        <div class="step-node active" id="step-1"><div class="step-circle">1</div><div class="step-title">1. Initiated</div></div>
+        <div class="step-node" id="step-2"><div class="step-circle">2</div><div class="step-title">2. Rep Verified</div></div>
+        <div class="step-node" id="step-3"><div class="step-circle">3</div><div class="step-title">3. Escrow Locked</div></div>
+        <div class="step-node" id="step-4"><div class="step-circle">4</div><div class="step-title">4. Confirmed</div></div>
       </div>
 
       <div class="grid-2">
-        <!-- Booking Initiator Form -->
         <div class="card">
-          <div class="card-title">Initiate Relay Booking Negotiation</div>
-          <form onsubmit="handleRelayBooking(event)">
+          <div class="card-title">SIP-Style Booking Handshake Initiator</div>
+          <form onsubmit="handleBookRelay(event)">
             <div class="form-group">
-              <label>Caller Agent (Sub-Agent or Root)</label>
-              <select class="form-control" id="relay-caller" required></select>
+              <label for="relay-caller">Caller Agent (Sub-Agent or Root DID)</label>
+              <select class="form-control" id="relay-caller" required><option value="">Select Caller DID...</option></select>
             </div>
             <div class="form-group">
-              <label>Target Merchant Vendor</label>
-              <select class="form-control" id="relay-vendor" required></select>
+              <label for="relay-vendor">Target Merchant Vendor</label>
+              <select class="form-control" id="relay-vendor" required><option value="">Select Merchant Vendor...</option></select>
             </div>
             <div class="form-group">
-              <label>Service Name</label>
-              <input type="text" class="form-control" id="relay-service" value="Waymo Autonomous Ride - SF Downtown" required>
+              <label for="relay-service">Service Name</label>
+              <input type="text" class="form-control" id="relay-service" value="ev-autonomous-dispatch" required>
+            </div>
+            <div class="form-group">
+              <label for="relay-bond">Commitment Escrow Bond (USD)</label>
+              <input type="number" class="form-control" id="relay-bond" min="1" step="1" value="25" required>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label>Escrow Bond (USD)</label>
-                <input type="number" class="form-control" id="relay-bond" min="1" step="5" value="35.00" required>
-              </div>
-              <div class="form-group">
-                <label>Vendor Min Required Score</label>
+                <label for="relay-min-score">Vendor Min Required Score (1.0 - 5.0)</label>
                 <input type="number" class="form-control" id="relay-min-score" min="1.0" max="5.0" step="0.1" value="3.0">
               </div>
+              <div class="form-group">
+                <label for="relay-min-tier">Vendor Required Trust Tier</label>
+                <select class="form-control" id="relay-min-tier">
+                  <option value="0">Tier 0 (Ephemeral)</option>
+                  <option value="1" selected>Tier 1 (Economic)</option>
+                  <option value="2">Tier 2 (Reputational)</option>
+                  <option value="3">Tier 3 (Sovereign)</option>
+                </select>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Vendor Required Trust Tier</label>
-              <select class="form-control" id="relay-min-tier">
-                <option value="0">Tier 0 (Ephemeral Allowed)</option>
-                <option value="1" selected>Tier 1 (Economic Required)</option>
-                <option value="2">Tier 2 (Reputational Required)</option>
-                <option value="3">Tier 3 (Sovereign Required)</option>
-              </select>
-            </div>
-            <button type="submit" class="btn" style="width: 100%;">Execute Booking Handshake</button>
+            <button type="submit" class="btn">Execute Booking Handshake</button>
           </form>
         </div>
 
-        <!-- Negotiation Result & Receipt -->
         <div class="card">
           <div class="card-title">
-            <span>Negotiation Output &amp; Lock Receipt</span>
-            <span id="relay-badge" class="badge badge-t0">IDLE</span>
+            <span>Negotiation Output &amp; Vault Lock</span>
+            <span class="badge" id="relay-badge" data-state="empty">IDLE</span>
           </div>
-          <div id="relay-result-summary" style="color: var(--text-muted); font-size: 13px;">
-            Awaiting booking initiation...
-          </div>
-          <pre class="json-viewer" id="relay-json">{ "status": "waiting_for_input" }</pre>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary btn-sm" id="relay-send-to-oracle" style="display:none;" onclick="prefillOracleFromRelay()">Transfer Lock ID to Tab 3 Check-In</button>
-          </div>
+          <div class="status-banner" id="relay-result-summary" role="status" aria-live="polite" data-state="empty">Select agents above and execute a booking handshake.</div>
+          <button type="button" class="btn btn-secondary btn-sm" id="relay-send-to-oracle" onclick="transferRelayToOracle()" style="display:none;">Transfer Lock ID to Accountability Oracle</button>
+          <pre class="json-viewer" id="relay-json">// Session details will appear here...</pre>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- TAB 3: Accountability Oracle & Double-Blind Check-In -->
-    <div id="tab-oracle" class="tab-content">
-      <div class="card">
-        <div class="card-title">
-          <span>Accountability Oracle: 60-Second Double-Blind Check-In</span>
-          <span style="font-size: 11px; color: var(--text-dim); text-transform: none;">Mutual Arrival &amp; Slashing Resolution</span>
-        </div>
-        <p style="color: var(--text-muted); font-size: 13px;">
-          Solves mutual-arrival coordination without continuous tracking. Single-use 60s nonces prevent replay attacks.
-          Multi-factor verification combines mutual presence attestations, Stripe POS receipts, and BLE beacon audits.
-        </p>
-      </div>
-
+    <!-- TAB 3: Accountability Oracle & 60s Double-Blind Check-In -->
+    <section id="tab-oracle" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-oracle" hidden>
       <div class="grid-2">
-        <!-- Step 1: Issue Challenge Nonce -->
         <div class="card">
-          <div class="card-title">Phase 1: Issue 60s Challenge Nonce</div>
+          <div class="card-title">Phase 1: 60-Second Cryptographic Challenge Nonce</div>
           <form onsubmit="handleIssueNonce(event)">
             <div class="form-group">
-              <label>Appointment ID</label>
-              <input type="text" class="form-control" id="orc-appt-id" value="apt-session-001" required>
+              <label for="orc-appt-id">Appointment ID</label>
+              <input type="text" class="form-control" id="orc-appt-id" value="appt-ev-90210" required>
             </div>
             <div class="form-group">
-              <label>User Agent DID</label>
-              <select class="form-control" id="orc-user-did" required></select>
+              <label for="orc-user-did">User Agent DID</label>
+              <select class="form-control" id="orc-user-did" required><option value="">Select User DID...</option></select>
             </div>
             <div class="form-group">
-              <label>Merchant Vendor DID</label>
-              <select class="form-control" id="orc-vendor-did" required></select>
+              <label for="orc-vendor-did">Merchant Vendor DID</label>
+              <select class="form-control" id="orc-vendor-did" required><option value="">Select Vendor DID...</option></select>
             </div>
-            <button type="submit" class="btn" style="width: 100%;">Issue 60-Second Challenge Nonce</button>
+            <button type="submit" class="btn">Issue 60s Challenge Nonce</button>
           </form>
 
-          <div style="margin-top: 12px; background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-            <div class="stat-label">Active Nonce Value</div>
-            <div class="code-span" id="orc-nonce-display" style="word-break: break-all; display: block; margin: 4px 0;">None Issued</div>
-            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-top: 4px;">
-              <span>Expires In: <strong id="orc-nonce-timer" style="color: var(--accent-amber);">--</strong></span>
-              <span id="orc-nonce-status">INACTIVE</span>
-            </div>
+          <div class="stat-box">
+            <div class="stat-label">Issued Challenge Nonce (32-byte Hex)</div>
+            <div class="code-span tabular-nums" id="orc-nonce-display">None Issued</div>
+            <div class="stat-label" style="margin-top: 8px;">Replay-Protection Countdown</div>
+            <div class="stat-val"><span id="orc-nonce-timer" class="tabular-nums">--</span> <span class="badge" id="orc-nonce-status" role="status" aria-live="polite" data-state="empty">INACTIVE</span></div>
           </div>
         </div>
 
-        <!-- Step 2: Settle Appointment -->
         <div class="card">
-          <div class="card-title">Phase 2: Multi-Factor Double-Blind Settlement</div>
-          <div style="display: flex; gap: 6px; margin-bottom: 12px;">
-            <button class="btn btn-secondary btn-sm" onclick="setSettlementScenario('success')">Preset: Mutual Success</button>
-            <button class="btn btn-secondary btn-sm" onclick="setSettlementScenario('slash')">Preset: User No-Show</button>
-            <button class="btn btn-secondary btn-sm" onclick="setSettlementScenario('dispute')">Preset: Vendor Dispute</button>
+          <div class="card-title">Phase 2: Double-Blind Multi-Factor Settlement</div>
+          <div class="filter-toolbar" style="margin-bottom: var(--space-3);">
+            <div class="filter-group">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="presetSettlement('success')">Preset: Mutual Success</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="presetSettlement('noshow')">Preset: User No-Show</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="presetSettlement('dispute')">Preset: Vendor Dispute</button>
+            </div>
           </div>
-
-          <form onsubmit="handleOracleSettle(event)">
+          <form onsubmit="handleSettle(event)">
             <div class="form-row">
               <div class="form-group">
-                <label>Lock ID (Escrow Vault)</label>
-                <input type="text" class="form-control" id="settle-lock-id" placeholder="lock-xxxx">
+                <label for="settle-lock-id">Escrow Vault Lock ID</label>
+                <input type="text" class="form-control tabular-nums" id="settle-lock-id" required placeholder="lock_...">
               </div>
               <div class="form-group">
-                <label>Booking Amount (USD)</label>
-                <input type="number" class="form-control" id="settle-amount" value="35.00" min="1" step="5">
+                <label for="settle-amount">Booking Amount (USD)</label>
+                <input type="number" class="form-control tabular-nums" id="settle-amount" min="1" step="1" value="25" required>
               </div>
             </div>
-
             <div class="form-row">
-              <div class="form-group">
-                <label>Attestation Signals</label>
-                <div class="form-check">
-                  <input type="checkbox" id="settle-user-pres" checked>
-                  <label for="settle-user-pres">User Present Attestation</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="settle-vendor-pres" checked>
-                  <label for="settle-vendor-pres">Vendor Present Attestation</label>
-                </div>
+              <div class="form-check">
+                <input type="checkbox" id="settle-user-pres" checked>
+                <label for="settle-user-pres">User Agent Present</label>
               </div>
-              <div class="form-group">
-                <label>Hardware &amp; POS Proofs</label>
-                <div class="form-check">
-                  <input type="checkbox" id="settle-stripe" checked>
-                  <label for="settle-stripe">Stripe POS Hardware Receipt</label>
-                </div>
-                <div class="form-check">
-                  <input type="checkbox" id="settle-beacon" checked>
-                  <label for="settle-beacon">Local BLE Beacon Verified</label>
-                </div>
+              <div class="form-check">
+                <input type="checkbox" id="settle-vendor-pres" checked>
+                <label for="settle-vendor-pres">Vendor Agent Present</label>
               </div>
             </div>
-
+            <div class="form-row">
+              <div class="form-check">
+                <input type="checkbox" id="settle-stripe" checked>
+                <label for="settle-stripe">Stripe POS Receipt Verified</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" id="settle-beacon" checked>
+                <label for="settle-beacon">BLE Physical Beacon Verified</label>
+              </div>
+            </div>
             <div class="form-group">
-              <label>Peer Review Rating (1.0 to 5.0)</label>
-              <input type="number" class="form-control" id="settle-rating" min="1.0" max="5.0" step="0.1" value="5.0">
+              <label for="settle-rating">Peer Review Rating (1.0 - 5.0)</label>
+              <input type="number" class="form-control tabular-nums" id="settle-rating" min="1.0" max="5.0" step="0.1" value="5.0">
             </div>
-
-            <button type="submit" class="btn" style="width: 100%;">Execute Double-Blind Settlement</button>
+            <button type="submit" class="btn">Execute Double-Blind Settlement</button>
           </form>
         </div>
       </div>
 
-      <!-- Oracle Settlement Outcome Card -->
       <div class="card">
         <div class="card-title">
-          <span>Authoritative Settlement Outcome &amp; Jury Audit</span>
-          <span id="settle-status-badge" class="badge badge-t0">AWAITING EXECUTION</span>
+          <span>Authoritative Settlement Outcome</span>
+          <span class="badge" id="settle-status-badge" data-state="empty">AWAITING EXECUTION</span>
         </div>
-        <pre class="json-viewer" id="settle-json">{ "status": "idle" }</pre>
+        <div class="status-banner" id="settle-result-summary" role="status" aria-live="polite" data-state="empty">Awaiting settlement adjudication.</div>
+        <div class="jury-callout" id="jury-fallback-callout" role="status" aria-live="polite" data-state="empty" hidden>
+          <h4>AI Audit Jury Fallback</h4>
+          <p id="jury-fallback-text"></p>
+        </div>
+        <pre class="json-viewer" id="settle-json">// Settlement outcome details...</pre>
       </div>
-    </div>
+    </section>
 
     <!-- TAB 4: RaaS Privacy Passport & Merkle Ledger Explorer -->
-    <div id="tab-raas" class="tab-content">
+    <section id="tab-raas" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-raas" hidden>
       <div class="grid-2">
-        <!-- RaaS Passport Issuer -->
         <div class="card">
-          <div class="card-title">
-            <span>Issue Selective-Disclosure Trust Passport</span>
-            <span class="badge badge-t2">RaaS Enclave</span>
-          </div>
-          <p style="color: var(--text-muted); font-size: 13px;">
-            Issue enclave-signed Trust Passports asserting boolean trust predicates without revealing raw financial transaction history.
-          </p>
-
+          <div class="card-title">Selective-Disclosure TrustPassport Issuer</div>
           <form onsubmit="handleIssuePassport(event)">
             <div class="form-group">
-              <label>Subject Agent DID</label>
-              <select class="form-control" id="pass-subject" required></select>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Req Min Fulfillment</label>
-                <input type="number" class="form-control" id="pass-min-ful" min="0.5" max="1.0" step="0.05" value="0.90">
-              </div>
-              <div class="form-group">
-                <label>Req Min Bookings</label>
-                <input type="number" class="form-control" id="pass-min-book" min="1" step="1" value="10">
-              </div>
+              <label for="pass-subject">Subject Agent DID</label>
+              <select class="form-control" id="pass-subject" required><option value="">Select Subject DID...</option></select>
             </div>
             <div class="form-group">
-              <label>Req Min Trust Tier</label>
+              <label for="pass-min-ful">Min Fulfillment Rate (0.50 - 1.00)</label>
+              <input type="number" class="form-control tabular-nums" id="pass-min-ful" min="0.50" max="1.00" step="0.05" value="0.80">
+            </div>
+            <div class="form-group">
+              <label for="pass-min-book">Min Settled Bookings</label>
+              <input type="number" class="form-control tabular-nums" id="pass-min-book" min="1" step="1" value="2">
+            </div>
+            <div class="form-group">
+              <label for="pass-min-tier">Min Required Trust Tier</label>
               <select class="form-control" id="pass-min-tier">
                 <option value="1">Tier 1 (Economic)</option>
                 <option value="2" selected>Tier 2 (Reputational)</option>
                 <option value="3">Tier 3 (Sovereign)</option>
               </select>
             </div>
-            <button type="submit" class="btn" style="width: 100%;">Issue Signed Trust Passport</button>
+            <button type="submit" class="btn">Issue Selective-Disclosure Passport</button>
           </form>
 
-          <div style="margin-top: 16px;">
-            <div class="stat-label">Issued Trust Passport Credential</div>
-            <pre class="json-viewer" id="passport-json">{ "status": "none_issued" }</pre>
-            <button class="btn btn-secondary btn-sm" id="verify-passport-btn" style="display:none; width: 100%; margin-top: 8px;" onclick="handleVerifyPassport()">Verify Passport Cryptographic Signature</button>
-          </div>
+          <div class="status-banner" id="passport-status-banner" role="status" aria-live="polite" data-state="empty">Configure predicates to mint credential.</div>
+          <button type="button" class="btn btn-secondary btn-sm" id="verify-passport-btn" onclick="handleVerifyPassport()" style="display:none;">Verify Enclave Signature Against Merkle Root</button>
+          <pre class="json-viewer" id="passport-json">// TrustPassport credential...</pre>
         </div>
 
-        <!-- Merkle Inclusion Proof Inspector -->
         <div class="card">
-          <div class="card-title">
-            <span>Merkle Tree Inclusion Proof Auditor</span>
-            <button class="btn btn-secondary btn-sm" onclick="fetchMerkleLedger()">Refresh Ledger</button>
+          <div class="card-title">SHA-256 Merkle Ledger &amp; Cryptographic Proof Auditor</div>
+          <div class="stat-box">
+            <div class="stat-label">Active SHA-256 Merkle Root</div>
+            <div class="code-span tabular-nums" id="merkle-ledger-root">Loading...</div>
           </div>
-          <p style="color: var(--text-muted); font-size: 13px;">
-            Inspect settled interaction records in the append-only SHA-256 Merkle Ledger and audit cryptographic inclusion proofs.
-          </p>
-
-          <div class="form-group">
-            <label>Current Merkle Root (SHA-256)</label>
-            <div class="code-span" id="merkle-ledger-root" style="word-break: break-all; font-size: 12px; padding: 6px 10px;">Loading...</div>
-          </div>
-
-          <div class="form-row">
+          <form onsubmit="handleAuditMerkleProof(event)">
             <div class="form-group">
-              <label>Audit Record Index</label>
-              <input type="number" class="form-control" id="merkle-proof-idx" min="0" value="0">
+              <label for="merkle-proof-idx">Merkle Leaf Record Index (0 to N-1)</label>
+              <input type="number" class="form-control tabular-nums" id="merkle-proof-idx" min="0" step="1" value="0" required>
             </div>
-            <div class="form-group" style="justify-content: flex-end;">
-              <button class="btn btn-secondary" onclick="auditMerkleProof()" style="margin-top: 20px;">Audit Proof</button>
-            </div>
-          </div>
-
-          <div class="stat-label">Inclusion Proof Telemetry</div>
-          <pre class="json-viewer" id="merkle-proof-json">{ "proof": "select_index_to_audit" }</pre>
+            <button type="submit" class="btn btn-secondary">Audit Inclusion Proof</button>
+          </form>
+          <div class="status-banner" id="merkle-proof-status" role="status" aria-live="polite" data-state="empty">Enter leaf index to audit cryptographic proof.</div>
+          <pre class="json-viewer" id="merkle-proof-json">// Inclusion proof details...</pre>
         </div>
       </div>
 
-      <!-- Merkle Records Table -->
       <div class="card">
-        <div class="card-title">
-          <span>Settled Merkle Interaction Records</span>
-        </div>
+        <div class="card-title">Settled Merkle Interaction Records</div>
         <div class="table-responsive">
           <table>
             <thead>
-              <tr>
-                <th>Record ID</th>
-                <th>Appointment ID</th>
-                <th>User Root DID</th>
-                <th>Vendor DID</th>
-                <th>Status</th>
-                <th>Amount (USD)</th>
-                <th>Timestamp</th>
-              </tr>
+              <tr><th>Index</th><th>Record ID</th><th>Type</th><th>Caller DID</th><th>Amount</th><th>Timestamp</th></tr>
             </thead>
-            <tbody id="merkle-records-tbody">
-              <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">Loading ledger records...</td></tr>
-            </tbody>
+            <tbody id="merkle-records-tbody"></tbody>
           </table>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- TAB 5: Adversarial Threat Model Lab -->
-    <div id="tab-threat" class="tab-content">
-      <div class="card">
-        <div class="card-title">
-          <span>Adversarial Threat Model Simulator</span>
-          <span style="font-size: 11px; color: var(--text-dim); text-transform: none;">First-Principles Security Invariants</span>
-        </div>
-        <p style="color: var(--text-muted); font-size: 13px;">
-          Execute deterministic adversarial attack simulations proving protocol resistance against Sybil swarms, whale velocity attacks, and collusive vendor fraud.
-        </p>
-      </div>
-
-      <!-- 3 Attack Scenario Cards -->
+    <section id="tab-threat" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-threat" hidden>
       <div class="grid-3">
-        <!-- Scenario 1: Sybil Swarm -->
         <div class="attack-card">
           <div class="attack-header">
-            <div>
-              <div class="attack-title">1,000-Bot Sybil Swarm</div>
-              <div style="font-size: 11px; color: var(--accent-amber); font-family: var(--font-mono); margin-top: 2px;">ATTACK: Wash-Trading Endorsement Ring</div>
-            </div>
+            <div class="attack-title">1,000-Bot Sybil Swarm Attack</div>
             <span class="badge badge-warning">SWARM</span>
           </div>
-          <div class="attack-desc">
-            1,000 zero-stake ephemeral bots generate circular zero-dollar endorsements attempting to artificially inflate reputation to pass high-value trust gates.
-          </div>
-          <div class="attack-defense">
-            <strong>Safeguard:</strong> Weight-of-Stake endorsement formula damps unbonded endorsements to zero, trapping 100% of bots at Tier 0 Ephemeral with $0 approved volume.
-          </div>
-          <button class="btn" onclick="runSimulation('sybil-swarm')">Run Sybil Simulation</button>
+          <div class="attack-desc">Simulates 1,000 unbonded automated Sybil bots attempting to artificially inflate reputation via circular wash trading.</div>
+          <div class="attack-defense">ACN Defense: Stake-weighted PageRank dampening and EigenTrust matrix isolation ensure zero-bond identities cannot inflate trust.</div>
+          <button type="button" class="btn btn-secondary" onclick="runSimulation('sybil-swarm')">Execute Sybil Swarm Attack</button>
         </div>
 
-        <!-- Scenario 2: Whale Attack -->
         <div class="attack-card">
           <div class="attack-header">
-            <div>
-              <div class="attack-title">$1M Whale Capital Attack</div>
-              <div style="font-size: 11px; color: var(--accent-amber); font-family: var(--font-mono); margin-top: 2px;">ATTACK: Instant Flash Liquidity Drain</div>
-            </div>
-            <span class="badge badge-warning">VELOCITY</span>
+            <div class="attack-title">$1,000,000 Whale Capital Attack</div>
+            <span class="badge badge-danger">VELOCITY</span>
           </div>
-          <div class="attack-desc">
-            Adversary deposits $1,000,000 at t=0 and attempts 500 concurrent $100 bookings ($50,000 exposure) to monopolize vendor capacity before any reputation accrues.
-          </div>
-          <div class="attack-defense">
-            <strong>Safeguard:</strong> Time-Weighted Velocity bounds capacity to &nu; = (Stake &times; Age) + (Tx &times; Q). At t=0, capacity is $0.00; mature capacity scales smoothly at Day 30.
-          </div>
-          <button class="btn" onclick="runSimulation('whale-attack')">Run Whale Simulation</button>
+          <div class="attack-desc">Simulates a high-capital adversary attempting an instantaneous flash attack on escrow vaults.</div>
+          <div class="attack-defense">ACN Defense: Longitudinal age requirements and velocity rate-limiting caps enforce deterministic exposure ceilings.</div>
+          <button type="button" class="btn btn-secondary" onclick="runSimulation('whale-attack')">Execute Whale Capital Attack</button>
         </div>
 
-        <!-- Scenario 3: Collusive Vendor -->
         <div class="attack-card">
           <div class="attack-header">
-            <div>
-              <div class="attack-title">Collusive Vendor Fraud</div>
-              <div style="font-size: 11px; color: var(--accent-amber); font-family: var(--font-mono); margin-top: 2px;">ATTACK: Fraudulent No-Show Claim</div>
-            </div>
-            <span class="badge badge-warning">DISPUTE</span>
+            <div class="attack-title">Collusive Vendor Merchant Fraud</div>
+            <span class="badge badge-warning">COLLUSION</span>
           </div>
-          <div class="attack-desc">
-            Malicious vendor falsely reports user as a No-Show to steal 70% slash compensation, despite the user holding a 60s nonce, POS receipt, and beacon proof.
-          </div>
-          <div class="attack-defense">
-            <strong>Safeguard:</strong> Oracle flags conflicting presence attestations as STATUS_DISPUTED. Hybrid AI Jury arbitrates, releases user bond intact, and slashes vendor reputation.
-          </div>
-          <button class="btn" onclick="runSimulation('collusive-vendor')">Run Collusive Vendor Simulation</button>
+          <div class="attack-desc">Simulates malicious merchant vendor fabricating arrival attestations to capture user escrow deposits.</div>
+          <div class="attack-defense">ACN Defense: Hardware Stripe POS receipts, local BLE beacons, and hybrid AI jury arbitration slash collusive bonds.</div>
+          <button type="button" class="btn btn-secondary" onclick="runSimulation('collusive-vendor')">Execute Collusive Fraud</button>
         </div>
       </div>
 
-      <!-- Simulation Telemetry & Comparative Metrics -->
       <div class="card">
         <div class="card-title">
-          <span>Simulation Outcome &amp; Mathematical Telemetry</span>
-          <span id="sim-defense-badge" class="badge badge-t0">READY</span>
+          <span>Comparative Mathematical Telemetry</span>
+          <span class="badge" id="sim-defense-badge" data-state="empty">READY</span>
         </div>
-        <div id="sim-summary" style="font-size: 13px; color: var(--text-main); background: var(--bg-card); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-          Select a simulation scenario above to execute.
-        </div>
-
+        <div class="status-banner" id="sim-summary" role="status" aria-live="polite" data-state="empty">Select an adversarial scenario above to execute verification.</div>
         <div class="table-responsive">
           <table id="sim-metrics-table">
             <thead>
-              <tr>
-                <th>Telemetry Metric</th>
-                <th>Observed Value</th>
-                <th>Security Invariant Constraint</th>
-                <th>Status</th>
-              </tr>
+              <tr><th>Invariant Metric</th><th>Adversarial Input</th><th>Observed Outcome</th><th>Security Boundary Contract</th><th>Status</th></tr>
             </thead>
             <tbody id="sim-metrics-tbody">
-              <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">No active simulation telemetry.</td></tr>
+              <tr><td colspan="5" style="text-align:center; color: var(--text-dim);">No simulation has been executed yet.</td></tr>
             </tbody>
           </table>
         </div>
-
-        <pre class="json-viewer" id="sim-json">{ "status": "ready" }</pre>
+        <pre class="json-viewer" id="sim-json">// Simulation results will appear here...</pre>
       </div>
-    </div>
-
+    </section>
   </main>
 
-  <!-- Footer -->
-  <footer>
-    <div>ACN Protocol Node &bull; Specification M11 &bull; Linux amd64</div>
-    <div>Zero Emojis Enforced &bull; Design by Contract Verified</div>
+  <footer role="contentinfo">
+    <div>ACN Protocol v2.0 (v2-ux) &bull; High-Density Sovereign Cryptographic Console</div>
+    <div>Mainframe Homelab &bull; Deterministic Trust &amp; Escrow Control Plane</div>
   </footer>
 
-  <!-- Application Logic & Live API Fetch Client -->
-  <script>
-    let activeNonceInterval = null;
-    let currentNonceExpiry = null;
-    let lastIssuedPassport = null;
-
-    // Switch visible tab
-    function switchTab(tabId, btn) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      const target = document.getElementById(tabId);
-      if (target) {
-        target.classList.add('active');
-      }
-      if (btn) {
-        btn.classList.add('active');
-      }
-    }
-
-    // Format currency
-    function fmtUSD(val) {
-      return '$' + (Number(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    // Refresh Overview
-    async function refreshOverview() {
-      try {
-        const res = await fetch('/api/v1/overview');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-
-        // Update pills
-        const rootShort = data.merkle_root ? (data.merkle_root.substring(0, 10) + '...' + data.merkle_root.substring(data.merkle_root.length - 8)) : 'EMPTY';
-        document.getElementById('pill-merkle-root').innerText = rootShort;
-        document.getElementById('pill-registered-agents').innerText = data.registered_agents || 0;
-        document.getElementById('pill-sub-agents').innerText = data.active_sub_agents || 0;
-        document.getElementById('pill-escrow-locked').innerText = fmtUSD(data.escrow?.total_locked_usd);
-        document.getElementById('pill-treasury-fees').innerText = fmtUSD(data.escrow?.treasury_fees_usd);
-
-        // Update Tab 1 Stats
-        document.getElementById('stat-locked-usd').innerText = fmtUSD(data.escrow?.total_locked_usd);
-        document.getElementById('stat-avail-usd').innerText = fmtUSD(data.escrow?.total_available_usd);
-        document.getElementById('stat-fees-usd').innerText = fmtUSD(data.escrow?.treasury_fees_usd);
-        document.getElementById('stat-slashed-usd').innerText = fmtUSD(data.escrow?.total_slashed_usd);
-
-        // Refresh agent directories
-        await fetchAgents();
-        await fetchMerkleLedger();
-      } catch (err) {
-        console.error('Failed to refresh overview:', err);
-      }
-    }
-
-    // Fetch and populate agents
-    async function fetchAgents() {
-      try {
-        const res = await fetch('/api/v1/agents');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-
-        renderAgentsTable(data.root_agents || []);
-        renderSubAgentsTable(data.sub_agents || []);
-        populateAgentDropdowns(data.root_agents || [], data.sub_agents || []);
-      } catch (err) {
-        console.error('Failed to fetch agents:', err);
-      }
-    }
-
-    // Render agents table
-    function renderAgentsTable(rootItems) {
-      const tbody = document.getElementById('agents-table-body');
-      if (!rootItems || rootItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-dim);">No registered agents.</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = rootItems.map(item => {
-        const a = item.agent;
-        const rep = item.reputation_snapshot;
-        const tierBadge = getTierBadge(a.trust_tier, a.is_vendor);
-        const score = rep ? rep.composite_score.toFixed(2) : (a.composite_score >= 0 ? a.composite_score.toFixed(2) : '3.00');
-        const popBadge = a.pop_verified ? '<span class="badge badge-success">PoP</span>' : '<span style="color:var(--text-dim);">-</span>';
-        const teeBadge = a.tee_attested ? '<span class="badge badge-success">TEE</span>' : '<span style="color:var(--text-dim);">-</span>';
-
-        return `
-          <tr>
-            <td>
-              <div style="font-weight: 600;">${escapeHTML(a.display_name)}</div>
-              <div style="font-size: 11px; color: var(--text-dim);">${a.is_vendor ? 'Merchant Vendor' : 'Sovereign Agent'}</div>
-            </td>
-            <td><span class="code-span">${escapeHTML(a.root_did)}</span></td>
-            <td>${tierBadge}</td>
-            <td style="font-family: var(--font-mono); font-size: 12px;">
-              <div>${fmtUSD(a.bond_usd)} bond</div>
-              <div style="color: var(--text-dim);">${fmtUSD(a.cumulative_spend_usd)} spend</div>
-            </td>
-            <td style="font-family: var(--font-mono);">${a.settled_tx_count}</td>
-            <td style="font-family: var(--font-mono); font-weight: 600; color: var(--accent-blue);">${score} / 5.00</td>
-            <td><div style="display: flex; gap: 4px;">${popBadge} ${teeBadge}</div></td>
-            <td>
-              <button class="btn btn-secondary btn-sm" onclick="selectAgentForDeposit('${escapeHTML(a.root_did)}')">Bond</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Render sub-agents table
-    function renderSubAgentsTable(subAgents) {
-      const tbody = document.getElementById('subagents-table-body');
-      if (!subAgents || subAgents.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim);">No active rotating sub-agents.</td></tr>';
-        return;
-      }
-
-      const now = new Date();
-      tbody.innerHTML = subAgents.map(sub => {
-        const exp = new Date(sub.expires_at);
-        const isExpired = exp < now;
-        const statusBadge = isExpired ? '<span class="badge badge-danger">EXPIRED</span>' : '<span class="badge badge-success">ACTIVE</span>';
-
-        return `
-          <tr>
-            <td><span class="code-span">${escapeHTML(sub.sub_agent_did)}</span></td>
-            <td><span class="code-span" style="color: var(--text-muted);">${escapeHTML(sub.parent_root_did)}</span></td>
-            <td><span style="font-family: var(--font-mono); font-size: 12px;">${escapeHTML(sub.purpose)}</span></td>
-            <td style="font-size: 11px; color: var(--text-dim);">${new Date(sub.created_at).toLocaleTimeString()}</td>
-            <td style="font-size: 11px; color: var(--text-dim);">${exp.toLocaleTimeString()}</td>
-            <td>${statusBadge}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // Populate dropdowns across tabs
-    function populateAgentDropdowns(rootItems, subAgents) {
-      const parentSelect = document.getElementById('spawn-parent');
-      const depositSelect = document.getElementById('deposit-did');
-      const relayCaller = document.getElementById('relay-caller');
-      const relayVendor = document.getElementById('relay-vendor');
-      const orcUser = document.getElementById('orc-user-did');
-      const orcVendor = document.getElementById('orc-vendor-did');
-      const passSubject = document.getElementById('pass-subject');
-
-      const userAgents = rootItems.filter(item => !item.agent.is_vendor);
-      const vendorAgents = rootItems.filter(item => item.agent.is_vendor);
-
-      // Root dropdown options
-      const allRootOpts = rootItems.map(i => `<option value="${escapeHTML(i.agent.root_did)}">${escapeHTML(i.agent.display_name)} (${escapeHTML(i.agent.root_did.substring(0, 18))}...)</option>`).join('');
-      parentSelect.innerHTML = '<option value="">Select Root Agent...</option>' + allRootOpts;
-      depositSelect.innerHTML = '<option value="">Select Agent...</option>' + allRootOpts;
-      passSubject.innerHTML = allRootOpts;
-
-      // Caller options: Sub-agents + User Roots
-      let callerOpts = subAgents.map(s => `<option value="${escapeHTML(s.sub_agent_did)}">[Sub-Agent] ${escapeHTML(s.purpose)} (${escapeHTML(s.sub_agent_did.substring(0, 18))}...)</option>`).join('');
-      callerOpts += userAgents.map(i => `<option value="${escapeHTML(i.agent.root_did)}">[Root] ${escapeHTML(i.agent.display_name)}</option>`).join('');
-      relayCaller.innerHTML = callerOpts;
-      orcUser.innerHTML = callerOpts;
-
-      // Vendor options
-      const vendorOpts = vendorAgents.map(i => `<option value="${escapeHTML(i.agent.root_did)}">${escapeHTML(i.agent.display_name)}</option>`).join('');
-      relayVendor.innerHTML = vendorOpts;
-      orcVendor.innerHTML = vendorOpts;
-    }
-
-    // Helper: Select agent for bond deposit
-    function selectAgentForDeposit(did) {
-      document.getElementById('deposit-did').value = did;
-      document.getElementById('deposit-amount').focus();
-    }
-
-    // Helper: Trust tier badge
-    function getTierBadge(tier, isVendor) {
-      if (isVendor) return '<span class="badge badge-vendor">Vendor</span>';
-      switch (tier) {
-        case 3: return '<span class="badge badge-t3">Tier 3 Sovereign</span>';
-        case 2: return '<span class="badge badge-t2">Tier 2 Reputational</span>';
-        case 1: return '<span class="badge badge-t1">Tier 1 Economic</span>';
-        default: return '<span class="badge badge-t0">Tier 0 Ephemeral</span>';
-      }
-    }
-
-    // Register Agent Form Submit
-    async function handleRegisterAgent(e) {
-      e.preventDefault();
-      const payload = {
-        action: 'register_root',
-        display_name: document.getElementById('reg-name').value.trim(),
-        is_vendor: document.getElementById('reg-vendor').value === 'true',
-        deposit_bond_usd: parseFloat(document.getElementById('reg-bond').value) || 0,
-        pop_verified: document.getElementById('reg-pop').checked,
-        tee_attested: document.getElementById('reg-tee').checked
-      };
-
-      try {
-        const res = await fetch('/api/v1/agents', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          alert('Registration failed: ' + (err.error || res.statusText));
-          return;
-        }
-        document.getElementById('reg-name').value = '';
-        await refreshOverview();
-      } catch (err) {
-        alert('Request failed: ' + err.message);
-      }
-    }
-
-    // Spawn Sub-Agent Form Submit
-    async function handleSpawnSubAgent(e) {
-      e.preventDefault();
-      const payload = {
-        action: 'spawn_sub',
-        root_did: document.getElementById('spawn-parent').value,
-        purpose: document.getElementById('spawn-purpose').value.trim(),
-        ttl_seconds: parseInt(document.getElementById('spawn-ttl').value, 10) || 86400
-      };
-
-      try {
-        const res = await fetch('/api/v1/agents', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          alert('Spawn failed: ' + (err.error || res.statusText));
-          return;
-        }
-        document.getElementById('spawn-purpose').value = '';
-        await refreshOverview();
-      } catch (err) {
-        alert('Request failed: ' + err.message);
-      }
-    }
-
-    // Deposit Bond Form Submit
-    async function handleDepositBond(e) {
-      e.preventDefault();
-      const payload = {
-        action: 'deposit_bond',
-        root_did: document.getElementById('deposit-did').value,
-        amount_usd: parseFloat(document.getElementById('deposit-amount').value) || 0
-      };
-
-      try {
-        const res = await fetch('/api/v1/agents', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          alert('Deposit failed: ' + (err.error || res.statusText));
-          return;
-        }
-        await refreshOverview();
-      } catch (err) {
-        alert('Request failed: ' + err.message);
-      }
-    }
-
-    // TAB 2: Relay Booking Negotiation
-    async function handleRelayBooking(e) {
-      e.preventDefault();
-      setStepperState('initiating');
-
-      const payload = {
-        caller_did: document.getElementById('relay-caller').value,
-        vendor_did: document.getElementById('relay-vendor').value,
-        service_name: document.getElementById('relay-service').value.trim(),
-        bond_amount_usd: parseFloat(document.getElementById('relay-bond').value) || 0,
-        min_required_score: parseFloat(document.getElementById('relay-min-score').value) || 0,
-        required_trust_tier: parseInt(document.getElementById('relay-min-tier').value, 10) || 0
-      };
-
-      try {
-        const res = await fetch('/api/v1/relay/book', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const session = await res.json();
-        document.getElementById('relay-json').innerText = JSON.stringify(session, null, 2);
-
-        if (!res.ok) {
-          setStepperState('failed');
-          document.getElementById('relay-badge').className = 'badge badge-danger';
-          document.getElementById('relay-badge').innerText = 'ERROR';
-          document.getElementById('relay-result-summary').innerText = 'Handshake failed: ' + (session.error || res.statusText);
-          return;
-        }
-
-        const badge = document.getElementById('relay-badge');
-        const summary = document.getElementById('relay-result-summary');
-        const sendBtn = document.getElementById('relay-send-to-oracle');
-
-        if (session.status === 'CONFIRMED') {
-          setStepperState('confirmed');
-          badge.className = 'badge badge-success';
-          badge.innerText = 'CONFIRMED';
-          summary.innerHTML = `<strong>Booking Confirmed:</strong> Lock ID <span class="code-span">${escapeHTML(session.lock_id)}</span> sealed. Fee: ${fmtUSD(session.protocol_fee_usd)}.`;
-          sendBtn.style.display = 'inline-block';
-          window.lastConfirmedRelaySession = session;
-        } else {
-          setStepperState('rejected');
-          badge.className = 'badge badge-danger';
-          badge.innerText = session.status;
-          summary.innerHTML = `<strong>Handshake Rejected:</strong> ${escapeHTML(session.rejection_reason || 'Threshold requirements not satisfied.')}`;
-          sendBtn.style.display = 'none';
-        }
-
-        await refreshOverview();
-      } catch (err) {
-        setStepperState('failed');
-        alert('Booking negotiation request failed: ' + err.message);
-      }
-    }
-
-    // Set visual state machine nodes
-    function setStepperState(state) {
-      const s1 = document.getElementById('step-1');
-      const s2 = document.getElementById('step-2');
-      const s3 = document.getElementById('step-3');
-      const s4 = document.getElementById('step-4');
-
-      [s1, s2, s3, s4].forEach(s => s.className = 'step-node');
-
-      if (state === 'initiating') {
-        s1.classList.add('active');
-      } else if (state === 'confirmed') {
-        s1.classList.add('completed');
-        s2.classList.add('completed');
-        s3.classList.add('completed');
-        s4.classList.add('completed');
-      } else if (state === 'rejected' || state === 'failed') {
-        s1.classList.add('completed');
-        s2.classList.add('failed');
-        s3.classList.add('failed');
-        s4.classList.add('failed');
-      }
-    }
-
-    // Pre-fill Tab 3 Oracle from Tab 2
-    function prefillOracleFromRelay() {
-      const s = window.lastConfirmedRelaySession;
-      if (!s) return;
-      document.getElementById('settle-lock-id').value = s.lock_id || '';
-      document.getElementById('settle-amount').value = s.bond_amount_usd || 35.00;
-      document.getElementById('orc-user-did').value = s.caller_did || '';
-      document.getElementById('orc-vendor-did').value = s.vendor_did || '';
-      switchTab('tab-oracle', document.querySelectorAll('.tab-btn')[2]);
-    }
-
-    // TAB 3: Issue 60s Challenge Nonce
-    async function handleIssueNonce(e) {
-      e.preventDefault();
-      const payload = {
-        appointment_id: document.getElementById('orc-appt-id').value.trim(),
-        user_did: document.getElementById('orc-user-did').value,
-        vendor_did: document.getElementById('orc-vendor-did').value
-      };
-
-      try {
-        const res = await fetch('/api/v1/oracle/challenge', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          alert('Failed to issue challenge nonce: ' + (err.error || res.statusText));
-          return;
-        }
-
-        const data = await res.json();
-        document.getElementById('orc-nonce-display').innerText = data.nonce;
-        window.activeNonceValue = data.nonce;
-
-        startNonceTimer(60);
-      } catch (err) {
-        alert('Challenge nonce request failed: ' + err.message);
-      }
-    }
-
-    // Nonce Countdown Timer
-    function startNonceTimer(seconds) {
-      if (activeNonceInterval) clearInterval(activeNonceInterval);
-      let rem = seconds;
-      const timerEl = document.getElementById('orc-nonce-timer');
-      const statusEl = document.getElementById('orc-nonce-status');
-      statusEl.innerHTML = '<span class="badge badge-success">ACTIVE</span>';
-
-      activeNonceInterval = setInterval(() => {
-        rem--;
-        if (rem <= 0) {
-          clearInterval(activeNonceInterval);
-          timerEl.innerText = 'EXPIRED';
-          statusEl.innerHTML = '<span class="badge badge-danger">EXPIRED</span>';
-        } else {
-          timerEl.innerText = rem + 's';
-        }
-      }, 1000);
-      timerEl.innerText = rem + 's';
-    }
-
-    // Preset settlement scenarios
-    function setSettlementScenario(type) {
-      if (type === 'success') {
-        document.getElementById('settle-user-pres').checked = true;
-        document.getElementById('settle-vendor-pres').checked = true;
-        document.getElementById('settle-stripe').checked = true;
-        document.getElementById('settle-beacon').checked = true;
-        document.getElementById('settle-rating').value = '5.0';
-      } else if (type === 'slash') {
-        document.getElementById('settle-user-pres').checked = false;
-        document.getElementById('settle-vendor-pres').checked = true;
-        document.getElementById('settle-stripe').checked = false;
-        document.getElementById('settle-beacon').checked = false;
-        document.getElementById('settle-rating').value = '1.0';
-      } else if (type === 'dispute') {
-        document.getElementById('settle-user-pres').checked = true;
-        document.getElementById('settle-vendor-pres').checked = false;
-        document.getElementById('settle-stripe').checked = true;
-        document.getElementById('settle-beacon').checked = true;
-        document.getElementById('settle-rating').value = '5.0';
-      }
-    }
-
-    // Execute Oracle Settlement
-    async function handleOracleSettle(e) {
-      e.preventDefault();
-      const nonceVal = window.activeNonceValue || document.getElementById('orc-nonce-display').innerText.trim();
-
-      const payload = {
-        appointment_id: document.getElementById('orc-appt-id').value.trim(),
-        lock_id: document.getElementById('settle-lock-id').value.trim(),
-        nonce: nonceVal,
-        user_did: document.getElementById('orc-user-did').value,
-        vendor_did: document.getElementById('orc-vendor-did').value,
-        user_present: document.getElementById('settle-user-pres').checked,
-        vendor_present: document.getElementById('settle-vendor-pres').checked,
-        stripe_pos_receipt: document.getElementById('settle-stripe').checked,
-        local_beacon_verified: document.getElementById('settle-beacon').checked,
-        peer_rating: parseFloat(document.getElementById('settle-rating').value) || 5.0,
-        amount_usd: parseFloat(document.getElementById('settle-amount').value) || 35.0
-      };
-
-      try {
-        const res = await fetch('/api/v1/oracle/settle', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        document.getElementById('settle-json').innerText = JSON.stringify(data, null, 2);
-
-        const badge = document.getElementById('settle-status-badge');
-        if (!res.ok) {
-          badge.className = 'badge badge-danger';
-          badge.innerText = 'SETTLEMENT FAILED';
-          return;
-        }
-
-        const outcome = data.outcome;
-        if (outcome.status === 'STATUS_SUCCESS') {
-          badge.className = 'badge badge-success';
-          badge.innerText = 'STATUS_SUCCESS (MUTUAL ARRIVAL)';
-        } else if (outcome.status === 'STATUS_SLASHED') {
-          badge.className = 'badge badge-danger';
-          badge.innerText = 'STATUS_SLASHED (NO-SHOW)';
-        } else if (outcome.status === 'STATUS_DISPUTED') {
-          badge.className = 'badge badge-warning';
-          const winner = data.verdict ? data.verdict.winner : 'ARBITRATED';
-          badge.innerText = `STATUS_DISPUTED (JURY: ${winner})`;
-        }
-
-        await refreshOverview();
-      } catch (err) {
-        alert('Settlement request failed: ' + err.message);
-      }
-    }
-
-    // TAB 4: Issue Trust Passport
-    async function handleIssuePassport(e) {
-      e.preventDefault();
-      const payload = {
-        subject_did: document.getElementById('pass-subject').value,
-        req_min_fulfillment: parseFloat(document.getElementById('pass-min-ful').value) || 0.90,
-        req_min_bookings: parseInt(document.getElementById('pass-min-book').value, 10) || 10,
-        req_min_tier: parseInt(document.getElementById('pass-min-tier').value, 10) || 1
-      };
-
-      try {
-        const res = await fetch('/api/v1/raas/passport', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        document.getElementById('passport-json').innerText = JSON.stringify(data, null, 2);
-
-        if (!res.ok) {
-          alert('Trust Passport issuance failed: ' + (data.error || res.statusText));
-          document.getElementById('verify-passport-btn').style.display = 'none';
-          return;
-        }
-
-        lastIssuedPassport = data;
-        document.getElementById('verify-passport-btn').style.display = 'block';
-      } catch (err) {
-        alert('Passport request failed: ' + err.message);
-      }
-    }
-
-    // Verify Trust Passport
-    async function handleVerifyPassport() {
-      if (!lastIssuedPassport) return;
-      try {
-        const res = await fetch('/api/v1/raas/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(lastIssuedPassport)
-        });
-        const data = await res.json();
-        if (data.valid) {
-          alert('Trust Passport Cryptographic Signature VERIFIED: Valid ECDSA attestation under Merkle root ' + data.merkle_root);
-        } else {
-          alert('Trust Passport Verification FAILED.');
-        }
-      } catch (err) {
-        alert('Verification call failed: ' + err.message);
-      }
-    }
-
-    // Fetch Merkle Ledger records
-    async function fetchMerkleLedger() {
-      try {
-        const res = await fetch('/api/v1/ledger/merkle');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-
-        document.getElementById('merkle-ledger-root').innerText = data.merkle_root || 'EMPTY';
-
-        const tbody = document.getElementById('merkle-records-tbody');
-        if (!data.records || data.records.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No Merkle records found.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = data.records.map((r, idx) => {
-          let statusBadge = `<span class="badge badge-t1">${escapeHTML(r.status)}</span>`;
-          if (r.status.includes('SUCCESS')) statusBadge = `<span class="badge badge-success">${escapeHTML(r.status)}</span>`;
-          if (r.status.includes('SLASHED')) statusBadge = `<span class="badge badge-danger">${escapeHTML(r.status)}</span>`;
-          if (r.status.includes('DISPUTED')) statusBadge = `<span class="badge badge-warning">${escapeHTML(r.status)}</span>`;
-
-          return `
-            <tr>
-              <td><span class="code-span">${escapeHTML(r.record_id || 'rec-' + idx)}</span></td>
-              <td><span class="code-span">${escapeHTML(r.appointment_id)}</span></td>
-              <td><span class="code-span">${escapeHTML(r.user_root_did ? r.user_root_did.substring(0, 16) + '...' : '-')}</span></td>
-              <td><span class="code-span">${escapeHTML(r.vendor_did ? r.vendor_did.substring(0, 16) + '...' : '-')}</span></td>
-              <td>${statusBadge}</td>
-              <td style="font-family: var(--font-mono);">${fmtUSD(r.amount_usd)}</td>
-              <td style="font-size: 11px; color: var(--text-dim);">${new Date(r.timestamp).toLocaleTimeString()}</td>
-            </tr>
-          `;
-        }).join('');
-      } catch (err) {
-        console.error('Failed to fetch Merkle ledger:', err);
-      }
-    }
-
-    // Audit Merkle Inclusion Proof
-    async function auditMerkleProof() {
-      const idx = document.getElementById('merkle-proof-idx').value;
-      try {
-        const res = await fetch(`/api/v1/ledger/merkle?index=${idx}`);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        document.getElementById('merkle-proof-json').innerText = JSON.stringify(data.inclusion_proof || data, null, 2);
-      } catch (err) {
-        alert('Failed to audit Merkle proof: ' + err.message);
-      }
-    }
-
-    // TAB 5: Adversarial Threat Model Lab
-    async function runSimulation(scenario) {
-      const badge = document.getElementById('sim-defense-badge');
-      badge.className = 'badge badge-warning';
-      badge.innerText = 'SIMULATING...';
-
-      try {
-        const res = await fetch(`/api/v1/simulate/${scenario}`, { method: 'POST' });
-        const data = await res.json();
-
-        document.getElementById('sim-json').innerText = JSON.stringify(data, null, 2);
-
-        if (data.defense_succeeded) {
-          badge.className = 'badge badge-success';
-          badge.innerText = 'DEFENSE SUCCEEDED [PASS]';
-        } else {
-          badge.className = 'badge badge-danger';
-          badge.innerText = 'DEFENSE BREACHED [FAIL]';
-        }
-
-        document.getElementById('sim-summary').innerHTML = `
-          <div style="font-weight: 700; color: var(--accent-blue); margin-bottom: 4px;">Scenario: ${escapeHTML(data.scenario)} (${data.duration_ms.toFixed(2)} ms)</div>
-          <div>${escapeHTML(data.summary)}</div>
-        `;
-
-        renderSimMetrics(scenario, data.metrics || {});
-      } catch (err) {
-        badge.className = 'badge badge-danger';
-        badge.innerText = 'SIMULATION ERROR';
-        alert('Simulation failed: ' + err.message);
-      }
-    }
-
-    // Render comparative simulation metrics
-    function renderSimMetrics(scenario, metrics) {
-      const tbody = document.getElementById('sim-metrics-tbody');
-      const rows = [];
-
-      if (scenario === 'sybil-swarm') {
-        rows.push({
-          metric: 'Sybil Bot Count',
-          val: metrics.sybil_bot_count,
-          invariant: '1,000 bots with zero bond',
-          status: '[OK]'
-        });
-        rows.push({
-          metric: 'Sybil Bots Trapped at Tier 0 Ephemeral',
-          val: `${metrics.sybil_tier_0_trapped_pct}%`,
-          invariant: 'Must equal exactly 100.0%',
-          status: metrics.sybil_tier_0_trapped_pct === 100 ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Sybil High-Value Bookings Approved',
-          val: metrics.sybil_high_value_bookings_approved,
-          invariant: 'Must strictly equal 0',
-          status: metrics.sybil_high_value_bookings_approved === 0 ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Sybil Average Reputation Score',
-          val: Number(metrics.sybil_avg_score).toFixed(2),
-          invariant: 'Must remain <= 2.50',
-          status: Number(metrics.sybil_avg_score) <= 2.5 ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Honest Agent Average Reputation Score',
-          val: Number(metrics.honest_avg_score).toFixed(2),
-          invariant: 'Must achieve >= 4.20',
-          status: Number(metrics.honest_avg_score) >= 4.2 ? '[PASS]' : '[FAIL]'
-        });
-      } else if (scenario === 'whale-attack') {
-        rows.push({
-          metric: 'Whale Capital Deposited',
-          val: fmtUSD(metrics.whale_deposit_usd),
-          invariant: '$1,000,000.00 capital spike',
-          status: '[OK]'
-        });
-        rows.push({
-          metric: 'Attempted Concurrent Bookings',
-          val: metrics.attempted_concurrent_bookings,
-          invariant: '500 concurrent $100 bookings',
-          status: '[OK]'
-        });
-        rows.push({
-          metric: 'Velocity Capacity at t=0',
-          val: fmtUSD(metrics.velocity_capacity_t0_usd),
-          invariant: 'Must equal $0.00 (zero tenure)',
-          status: metrics.velocity_capacity_t0_usd === 0 ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Bookings Blocked at t=0',
-          val: `${metrics.blocked_bookings_at_t0} / ${metrics.attempted_concurrent_bookings}`,
-          invariant: 'Must block >= 498 bookings',
-          status: metrics.blocked_bookings_at_t0 >= 498 ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Mature Capacity at Day 30',
-          val: fmtUSD(metrics.velocity_capacity_day30_usd),
-          invariant: 'Scales to >= $50,000.00',
-          status: metrics.velocity_capacity_day30_usd >= 50000 ? '[PASS]' : '[FAIL]'
-        });
-      } else if (scenario === 'collusive-vendor') {
-        rows.push({
-          metric: 'Oracle Settlement Status',
-          val: metrics.oracle_status,
-          invariant: 'STATUS_DISPUTED flagged',
-          status: metrics.oracle_status === 'STATUS_DISPUTED' ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Jury Dispute Verdict',
-          val: `Winner: ${metrics.jury_winner}`,
-          invariant: 'Winner must be USER',
-          status: metrics.jury_winner === 'USER' ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'User Bond Slashed',
-          val: metrics.user_bond_slashed ? 'TRUE' : 'FALSE',
-          invariant: 'Must be FALSE (bond intact)',
-          status: !metrics.user_bond_slashed ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Malicious Vendor Slashed',
-          val: metrics.vendor_slashed ? 'TRUE' : 'FALSE',
-          invariant: 'Must be TRUE',
-          status: metrics.vendor_slashed ? '[PASS]' : '[FAIL]'
-        });
-        rows.push({
-          metric: 'Vendor Reputation Degradation',
-          val: `${Number(metrics.vendor_reputation_before).toFixed(2)} -> ${Number(metrics.vendor_reputation_after).toFixed(2)}`,
-          invariant: 'Reputation strictly downgraded',
-          status: metrics.vendor_reputation_after < metrics.vendor_reputation_before ? '[PASS]' : '[FAIL]'
-        });
-      }
-
-      tbody.innerHTML = rows.map(r => `
-        <tr>
-          <td style="font-weight: 600;">${escapeHTML(r.metric)}</td>
-          <td style="font-family: var(--font-mono); color: var(--accent-blue);">${escapeHTML(String(r.val))}</td>
-          <td style="font-size: 12px; color: var(--text-dim);">${escapeHTML(r.invariant)}</td>
-          <td><span class="badge ${r.status === '[PASS]' ? 'badge-success' : (r.status === '[FAIL]' ? 'badge-danger' : 'badge-t1')}">${escapeHTML(r.status)}</span></td>
-        </tr>
-      `).join('');
-    }
-
-    // Utility: XSS prevention
-    function escapeHTML(str) {
-      if (!str) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-    }
-
-    // Auto-initialize on load
-    window.addEventListener('DOMContentLoaded', () => {
-      refreshOverview();
-    });
-  </script>
+  <script src="/ui/views.js" defer></script>
+  <script src="/ui/app.js" defer></script>
 </body>
 </html>
