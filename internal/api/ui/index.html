@@ -45,12 +45,14 @@
     </div>
   </header>
 
-  <nav class="tab-bar" id="console-tablist" role="tablist" aria-label="Console Primary Views">
-    <button type="button" class="tab-btn active" id="tab-btn-overview" role="tab" aria-selected="true" aria-controls="tab-overview" tabindex="0" onclick="switchTab('tab-overview', this)">1. Network Overview &amp; DID Directory</button>
-    <button type="button" class="tab-btn" id="tab-btn-relay" role="tab" aria-selected="false" aria-controls="tab-relay" tabindex="-1" onclick="switchTab('tab-relay', this)">2. Live Relay &amp; Escrow Negotiator</button>
-    <button type="button" class="tab-btn" id="tab-btn-oracle" role="tab" aria-selected="false" aria-controls="tab-oracle" tabindex="-1" onclick="switchTab('tab-oracle', this)">3. Accountability Oracle &amp; Check-In</button>
-    <button type="button" class="tab-btn" id="tab-btn-raas" role="tab" aria-selected="false" aria-controls="tab-raas" tabindex="-1" onclick="switchTab('tab-raas', this)">4. RaaS Passport &amp; Merkle Ledger</button>
-    <button type="button" class="tab-btn" id="tab-btn-threat" role="tab" aria-selected="false" aria-controls="tab-threat" tabindex="-1" onclick="switchTab('tab-threat', this)">5. Adversarial Threat Model Lab</button>
+  <nav class="tab-bar" role="navigation" aria-label="Console Primary Views">
+    <div class="tablist" id="console-tablist" role="tablist" aria-label="Console Primary Views">
+      <button type="button" class="tab-btn active" id="tab-btn-overview" role="tab" aria-selected="true" aria-controls="tab-overview" tabindex="0" onclick="switchTab('tab-overview', this)">1. Network Overview &amp; DID Directory</button>
+      <button type="button" class="tab-btn" id="tab-btn-relay" role="tab" aria-selected="false" aria-controls="tab-relay" tabindex="-1" onclick="switchTab('tab-relay', this)">2. Live Relay &amp; Escrow Negotiator</button>
+      <button type="button" class="tab-btn" id="tab-btn-oracle" role="tab" aria-selected="false" aria-controls="tab-oracle" tabindex="-1" onclick="switchTab('tab-oracle', this)">3. Accountability Oracle &amp; Check-In</button>
+      <button type="button" class="tab-btn" id="tab-btn-raas" role="tab" aria-selected="false" aria-controls="tab-raas" tabindex="-1" onclick="switchTab('tab-raas', this)">4. RaaS Passport &amp; Merkle Ledger</button>
+      <button type="button" class="tab-btn" id="tab-btn-threat" role="tab" aria-selected="false" aria-controls="tab-threat" tabindex="-1" onclick="switchTab('tab-threat', this)">5. Adversarial Threat Model Lab</button>
+    </div>
   </nav>
 
   <main id="main-content" role="main" tabindex="-1">
@@ -80,13 +82,13 @@
         <div class="table-responsive">
           <table>
             <thead>
-              <tr><th>Trust Tier</th><th>Min Bond</th><th>Min Spend</th><th>Settled Tx</th><th>Max Exposure</th><th>Attestation Prerequisites</th></tr>
+              <tr><th>Trust Tier</th><th class="num">Min Bond</th><th class="num">Min Spend</th><th class="num">Settled Tx</th><th class="num">Max Exposure</th><th>Attestation Prerequisites</th></tr>
             </thead>
             <tbody>
-              <tr><td><span class="badge badge-t0">Tier 0 (Ephemeral)</span></td><td>$0.00</td><td>$0.00</td><td>0</td><td>$10.00</td><td>Ed25519 Root DID generation only</td></tr>
-              <tr><td><span class="badge badge-t1">Tier 1 (Economic)</span></td><td>$50.00</td><td>$100.00</td><td>1</td><td>$250.00</td><td>Bond locked in ACN Escrow Vault</td></tr>
-              <tr><td><span class="badge badge-t2">Tier 2 (Reputational)</span></td><td>$100.00</td><td>$500.00</td><td>5</td><td>$1,000.00</td><td>Longitudinal history + RaaS Enclave attestation</td></tr>
-              <tr><td><span class="badge badge-t3">Tier 3 (Sovereign)</span></td><td>$500.00</td><td>$2,000.00</td><td>20</td><td>$10,000.00</td><td>Proof-of-Presence (PoP) + TEE Hardware Attestation</td></tr>
+              <tr><td><span class="badge badge-t0">Tier 0 (Ephemeral)</span></td><td class="num tabular-nums">$0.00</td><td class="num tabular-nums">$0.00</td><td class="num tabular-nums">0</td><td class="num tabular-nums">$5.00</td><td>Ed25519 Root DID generation only</td></tr>
+              <tr><td><span class="badge badge-t1">Tier 1 (Economic)</span></td><td class="num tabular-nums">$50.00</td><td class="num tabular-nums">$0.00</td><td class="num tabular-nums">0 (or 100 unbonded)</td><td class="num tabular-nums">$150.00</td><td>Bond locked in ACN Escrow Vault ($50.00+) or 100+ settled tx</td></tr>
+              <tr><td><span class="badge badge-t2">Tier 2 (Reputational)</span></td><td class="num tabular-nums">$50.00</td><td class="num tabular-nums">$500.00</td><td class="num tabular-nums">20</td><td class="num tabular-nums">$2,000.00</td><td>Longitudinal history ($500+ spend, 20+ tx) + $50.00+ bond</td></tr>
+              <tr><td><span class="badge badge-t3">Tier 3 (Sovereign)</span></td><td class="num tabular-nums">$50.00</td><td class="num tabular-nums">$500.00</td><td class="num tabular-nums">20</td><td class="num tabular-nums">$1,000,000.00</td><td>Proof-of-Presence (PoP) + Score &gt;= 4.50 + Tier 2 prerequisites</td></tr>
             </tbody>
           </table>
         </div>
@@ -108,7 +110,7 @@
           <div class="table-responsive">
             <table id="agents-table">
               <thead>
-                <tr><th>Identity</th><th>Role</th><th>Tier</th><th>Bond</th><th>Reputation</th></tr>
+                <tr><th>Identity</th><th>Role</th><th>Tier</th><th class="num">Bond</th><th class="num">Reputation</th></tr>
               </thead>
               <tbody id="agents-table-body"></tbody>
             </table>
@@ -145,7 +147,7 @@
             </div>
             <div class="form-group">
               <label for="reg-bond">Initial Good-Behavior Bond (USD)</label>
-              <input type="number" class="form-control" id="reg-bond" step="1" min="0" value="50" required>
+              <input type="number" class="form-control tabular-nums" id="reg-bond" step="1" min="0" value="50" required>
             </div>
             <div class="form-check">
               <input type="checkbox" id="reg-pop">
@@ -174,7 +176,7 @@
             </div>
             <div class="form-group">
               <label for="spawn-ttl">TTL Duration (Seconds)</label>
-              <input type="number" class="form-control" id="spawn-ttl" min="60" max="86400" value="3600" required>
+              <input type="number" class="form-control tabular-nums" id="spawn-ttl" min="60" max="86400" value="3600" required>
             </div>
             <button type="submit" class="btn">Spawn Rotating Sub-Agent</button>
           </form>
@@ -191,7 +193,7 @@
             </div>
             <div class="form-group">
               <label for="deposit-amount">Deposit Amount (USD)</label>
-              <input type="number" class="form-control" id="deposit-amount" min="1" step="1" value="100" required>
+              <input type="number" class="form-control tabular-nums" id="deposit-amount" min="1" step="1" value="100" required>
             </div>
             <button type="submit" class="btn">Deposit Collateral</button>
           </form>
@@ -202,7 +204,7 @@
     <!-- TAB 2: Live Agent Relay & Blind Escrow Negotiator -->
     <section id="tab-relay" class="tab-content" role="tabpanel" aria-labelledby="tab-btn-relay" hidden>
       <div class="stepper" id="relay-stepper">
-        <div class="step-node active" id="step-1"><div class="step-circle">1</div><div class="step-title">1. Initiated</div></div>
+        <div class="step-node" id="step-1"><div class="step-circle">1</div><div class="step-title">1. Initiated</div></div>
         <div class="step-node" id="step-2"><div class="step-circle">2</div><div class="step-title">2. Rep Verified</div></div>
         <div class="step-node" id="step-3"><div class="step-circle">3</div><div class="step-title">3. Escrow Locked</div></div>
         <div class="step-node" id="step-4"><div class="step-circle">4</div><div class="step-title">4. Confirmed</div></div>
@@ -226,12 +228,12 @@
             </div>
             <div class="form-group">
               <label for="relay-bond">Commitment Escrow Bond (USD)</label>
-              <input type="number" class="form-control" id="relay-bond" min="1" step="1" value="25" required>
+              <input type="number" class="form-control tabular-nums" id="relay-bond" min="1" step="1" value="25" required>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label for="relay-min-score">Vendor Min Required Score (1.0 - 5.0)</label>
-                <input type="number" class="form-control" id="relay-min-score" min="1.0" max="5.0" step="0.1" value="3.0">
+                <input type="number" class="form-control tabular-nums" id="relay-min-score" min="1.0" max="5.0" step="0.1" value="3.0">
               </div>
               <div class="form-group">
                 <label for="relay-min-tier">Vendor Required Trust Tier</label>
@@ -253,7 +255,7 @@
             <span class="badge" id="relay-badge" data-state="empty">IDLE</span>
           </div>
           <div class="status-banner" id="relay-result-summary" role="status" aria-live="polite" data-state="empty">Select agents above and execute a booking handshake.</div>
-          <button type="button" class="btn btn-secondary btn-sm" id="relay-send-to-oracle" onclick="transferRelayToOracle()" style="display:none;">Transfer Lock ID to Accountability Oracle</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="relay-send-to-oracle" onclick="transferRelayToOracle()" hidden>Transfer Lock ID to Accountability Oracle</button>
           <pre class="json-viewer" id="relay-json">// Session details will appear here...</pre>
         </div>
       </div>
@@ -281,16 +283,16 @@
           </form>
 
           <div class="stat-box">
-            <div class="stat-label">Issued Challenge Nonce (32-byte Hex)</div>
+            <div class="stat-label">Issued Challenge Nonce (16-byte / 32-hex)</div>
             <div class="code-span tabular-nums" id="orc-nonce-display">None Issued</div>
-            <div class="stat-label" style="margin-top: 8px;">Replay-Protection Countdown</div>
+            <div class="stat-label stat-label-spaced">Replay-Protection Countdown</div>
             <div class="stat-val"><span id="orc-nonce-timer" class="tabular-nums">--</span> <span class="badge" id="orc-nonce-status" role="status" aria-live="polite" data-state="empty">INACTIVE</span></div>
           </div>
         </div>
 
         <div class="card">
           <div class="card-title">Phase 2: Double-Blind Multi-Factor Settlement</div>
-          <div class="filter-toolbar" style="margin-bottom: var(--space-3);">
+          <div class="filter-toolbar filter-toolbar-spaced">
             <div class="filter-group">
               <button type="button" class="btn btn-secondary btn-sm" onclick="presetSettlement('success')">Preset: Mutual Success</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="presetSettlement('noshow')">Preset: User No-Show</button>
@@ -381,7 +383,7 @@
           </form>
 
           <div class="status-banner" id="passport-status-banner" role="status" aria-live="polite" data-state="empty">Configure predicates to mint credential.</div>
-          <button type="button" class="btn btn-secondary btn-sm" id="verify-passport-btn" onclick="handleVerifyPassport()" style="display:none;">Verify Enclave Signature Against Merkle Root</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="verify-passport-btn" onclick="handleVerifyPassport()" hidden>Verify Enclave Signature Against Merkle Root</button>
           <pre class="json-viewer" id="passport-json">// TrustPassport credential...</pre>
         </div>
 
@@ -408,7 +410,7 @@
         <div class="table-responsive">
           <table>
             <thead>
-              <tr><th>Index</th><th>Record ID</th><th>Type</th><th>Caller DID</th><th>Amount</th><th>Timestamp</th></tr>
+              <tr><th class="num">Index</th><th>Record ID</th><th>Status</th><th>Actor DID</th><th class="num">Amount</th><th>Timestamp</th></tr>
             </thead>
             <tbody id="merkle-records-tbody"></tbody>
           </table>
@@ -462,7 +464,7 @@
               <tr><th>Invariant Metric</th><th>Adversarial Input</th><th>Observed Outcome</th><th>Security Boundary Contract</th><th>Status</th></tr>
             </thead>
             <tbody id="sim-metrics-tbody">
-              <tr><td colspan="5" style="text-align:center; color: var(--text-dim);">No simulation has been executed yet.</td></tr>
+              <tr data-state="empty"><td colspan="5" class="table-empty-cell">No simulation has been executed yet.</td></tr>
             </tbody>
           </table>
         </div>

@@ -264,7 +264,10 @@ func TestUIAssets_ComponentsCSS(t *testing.T) {
 		{"step circle", ".step-circle"},
 		{"step title", ".step-title"},
 		{"jury callout base", ".jury-callout"},
+		{"jury callout hidden guard", ".jury-callout[hidden]"},
 		{"jury callout deterministic fallback engine", `.jury-callout[data-engine="DETERMINISTIC_MULTI_FACTOR"]`},
+		{"form vertical rhythm flex rule", "form {"},
+		{"tablist nested inside nav", "nav.tab-bar .tablist"},
 
 		// Adversarial Attack Cards
 		{"attack card container", ".attack-card"},

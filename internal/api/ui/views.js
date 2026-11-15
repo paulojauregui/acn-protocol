@@ -36,8 +36,8 @@ function announceSR(message) {
   }
 }
 
-// 4. Deterministic 5-State Status Banner Updater
-function setBannerState(elementId, state, message, isAlert) {
+// 4. Deterministic 5-State Status Banner Updater (with optional Retry/Dismiss actions)
+function setBannerState(elementId, state, message, isAlert, options) {
   const el = document.getElementById(elementId);
   if (!el) return;
 
@@ -52,9 +52,52 @@ function setBannerState(elementId, state, message, isAlert) {
   el.hidden = false;
   el.removeAttribute('hidden');
 
+  const opts = options || {};
+  const hasActions = (typeof opts.onRetry === 'function') || Boolean(opts.dismissible);
+
   if (message !== undefined && message !== null) {
-    el.textContent = String(message);
-    announceSR(message);
+    if (!hasActions) {
+      el.textContent = String(message);
+    } else {
+      el.textContent = '';
+      const msgSpan = document.createElement('span');
+      msgSpan.className = 'banner-msg';
+      msgSpan.textContent = String(message);
+      el.appendChild(msgSpan);
+
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'banner-actions';
+
+      if (typeof opts.onRetry === 'function') {
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'btn-banner';
+        retryBtn.textContent = opts.retryLabel || 'Retry';
+        retryBtn.addEventListener('click', () => opts.onRetry());
+        actionsDiv.appendChild(retryBtn);
+      }
+
+      if (opts.dismissible) {
+        const dismissBtn = document.createElement('button');
+        dismissBtn.type = 'button';
+        dismissBtn.className = 'btn-banner';
+        dismissBtn.textContent = 'Dismiss';
+        dismissBtn.addEventListener('click', () => {
+          el.setAttribute('data-state', 'empty');
+          el.setAttribute('role', 'status');
+          el.setAttribute('aria-live', 'polite');
+          el.textContent = opts.dismissText || 'Alert dismissed. Trigger an action or refresh to reload telemetry.';
+        });
+        actionsDiv.appendChild(dismissBtn);
+      }
+
+      el.appendChild(actionsDiv);
+    }
+
+    // Avoid duplicate screen-reader speech when element itself is a live region
+    if (!el.hasAttribute('aria-live')) {
+      announceSR(message);
+    }
   }
 }
 
@@ -96,47 +139,63 @@ function getTierBadge(tier, isVendor) {
   }
 }
 
-// 7. Sovereign Root Agents Table Renderer
+// 7. Sovereign Root Agents Directory Matcher & Table Renderer
+const TRUST_TIER_FILTER_LABELS = {
+  0: 'tier 0 ephemeral',
+  1: 'tier 1 economic',
+  2: 'tier 2 reputational',
+  3: 'tier 3 sovereign'
+};
+
+function matchesAgentFilter(item, filterQuery) {
+  const q = String(filterQuery || '').trim().toLowerCase();
+  if (!q) return true;
+  const a = item.agent || item;
+  const name = (a.display_name || '').toLowerCase();
+  const did = (a.root_did || '').toLowerCase();
+  const tierVal = Number(a.trust_tier || 0);
+  const tierLabel = TRUST_TIER_FILTER_LABELS[tierVal] || `tier ${tierVal}`;
+  const role = a.is_vendor ? 'vendor merchant' : 'autonomous user';
+  return name.includes(q) || did.includes(q) || tierLabel.includes(q) || role.includes(q);
+}
+
 function renderAgentsTable(rootItems, filterQuery) {
   const tbody = document.getElementById('agents-table-body');
-  if (!tbody) return;
+  if (!tbody) return 0;
 
   tbody.setAttribute('aria-busy', 'false');
   let items = rootItems || [];
 
   if (filterQuery && filterQuery.trim()) {
-    const q = filterQuery.trim().toLowerCase();
-    items = items.filter(item => {
-      const a = item.agent || item;
-      const name = (a.display_name || '').toLowerCase();
-      const did = (a.root_did || '').toLowerCase();
-      const tierLabel = `tier ${a.trust_tier || 0}`.toLowerCase();
-      const role = a.is_vendor ? 'vendor merchant' : 'autonomous user';
-      return name.includes(q) || did.includes(q) || tierLabel.includes(q) || role.includes(q);
-    });
+    items = items.filter(item => matchesAgentFilter(item, filterQuery));
   }
 
   if (items.length === 0) {
     tbody.innerHTML = `
       <tr data-state="empty">
-        <td colspan="5" style="text-align: center; padding: var(--space-4);">
-          <div style="color: var(--text-muted); margin-bottom: var(--space-2);">No agents match filter criteria</div>
+        <td colspan="5" class="table-empty-cell">
+          <div class="table-empty-hint">No agents match filter criteria</div>
           <button type="button" class="btn btn-secondary btn-sm" onclick="clearAgentFilter()">Reset Filter</button>
         </td>
       </tr>`;
-    return;
+    return 0;
   }
 
   tbody.innerHTML = items.map(item => {
     const a = item.agent || item;
     const rep = item.reputation_snapshot || {};
+    const repMetrics = rep.metrics || {};
     const tierBadge = getTierBadge(a.trust_tier, a.is_vendor);
     const score = (rep && rep.composite_score !== undefined)
       ? Number(rep.composite_score).toFixed(2)
       : (a.composite_score !== undefined ? Number(a.composite_score).toFixed(2) : '0.00');
-    const bond = a.initial_bond_usd !== undefined ? a.initial_bond_usd : (a.bond_usd !== undefined ? a.bond_usd : 0);
-    const spend = (rep && rep.cumulative_spend_usd !== undefined) ? rep.cumulative_spend_usd : (a.cumulative_spend_usd || 0);
-    const txCount = (rep && rep.settled_tx_count !== undefined) ? rep.settled_tx_count : (a.settled_tx_count || 0);
+    const bond = a.bond_usd !== undefined ? a.bond_usd : (a.initial_bond_usd !== undefined ? a.initial_bond_usd : 0);
+    const spend = repMetrics.cumulative_spend_usd !== undefined
+      ? repMetrics.cumulative_spend_usd
+      : (rep.cumulative_spend_usd !== undefined ? rep.cumulative_spend_usd : (a.cumulative_spend_usd || 0));
+    const txCount = repMetrics.settled_tx_count !== undefined
+      ? repMetrics.settled_tx_count
+      : (rep.settled_tx_count !== undefined ? rep.settled_tx_count : (a.settled_tx_count || 0));
 
     const popBadge = a.pop_verified ? '<span class="badge badge-success">PoP</span>' : '';
     const teeBadge = a.tee_attested ? '<span class="badge badge-success">TEE</span>' : '';
@@ -145,23 +204,24 @@ function renderAgentsTable(rootItems, filterQuery) {
     return `
       <tr>
         <td>
-          <div style="font-weight: 600;">${escapeHTML(a.display_name)}</div>
-          <div class="code-span tabular-nums" style="font-size: 11px;">${escapeHTML(a.root_did)}</div>
+          <div class="cell-primary">${escapeHTML(a.display_name)}</div>
+          <div><span class="code-span code-span-sm tabular-nums">${escapeHTML(a.root_did)}</span></div>
         </td>
         <td>
           ${roleBadge} ${popBadge} ${teeBadge}
         </td>
         <td>${tierBadge}</td>
         <td class="num tabular-nums">
-          <div style="font-weight: 700;">${fmtUSD(bond)}</div>
-          <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 4px;" onclick="selectAgentForDeposit('${escapeHTML(a.root_did)}')">+ Bond</button>
+          <div class="cell-primary">${fmtUSD(bond)}</div>
+          <button type="button" class="btn btn-secondary btn-sm cell-meta" onclick="selectAgentForDeposit('${escapeHTML(a.root_did)}')">+ Bond</button>
         </td>
         <td class="num tabular-nums">
-          <div style="font-weight: 700; color: var(--accent-blue);">${score} / 5.00</div>
-          <div style="font-size: 11px; color: var(--text-dim);" class="tabular-nums">${txCount} tx | ${fmtUSD(spend)}</div>
+          <div class="cell-score">${score} / 5.00</div>
+          <div class="cell-sub tabular-nums">${txCount} tx | ${fmtUSD(spend)}</div>
         </td>
       </tr>`;
   }).join('');
+  return items.length;
 }
 
 // 8. Rotating Sub-Agents Table Renderer (Unlinkable Ephemeral DIDs)
@@ -175,7 +235,7 @@ function renderSubAgentsTable(subAgents) {
   if (items.length === 0) {
     tbody.innerHTML = `
       <tr data-state="empty">
-        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: var(--space-4);">
+        <td colspan="4" class="table-empty-cell">
           No active rotating sub-agents. Use Spawn Rotating Sub-Agent below to delegate an ephemeral DID.
         </td>
       </tr>`;
@@ -184,9 +244,10 @@ function renderSubAgentsTable(subAgents) {
 
   const now = new Date();
   tbody.innerHTML = items.map(sub => {
-    // Authoritative Go wire-protocol payload normalization: sub_did vs sub_agent_did
+    // Authoritative Go wire-protocol payload normalization: sub_did vs sub_agent_did, purpose
     const subDID = sub.sub_did || sub.sub_agent_did || '';
     const parentDID = sub.parent_root_did || sub.parent_did || '';
+    const scopeText = sub.purpose || sub.delegation_purpose || sub.scope || 'ephemeral';
     const exp = sub.expires_at ? new Date(sub.expires_at) : null;
     const isExpired = exp ? exp < now : false;
     const statusBadge = isExpired
@@ -196,12 +257,12 @@ function renderSubAgentsTable(subAgents) {
     return `
       <tr>
         <td>
-          <div class="code-span tabular-nums" style="font-weight: 600;">${escapeHTML(subDID)}</div>
-          <div style="margin-top: 2px;">${statusBadge}</div>
+          <div><span class="code-span cell-primary tabular-nums">${escapeHTML(subDID)}</span></div>
+          <div class="cell-meta">${statusBadge}</div>
         </td>
-        <td><div class="code-span tabular-nums" style="font-size: 11px;">${escapeHTML(parentDID)}</div></td>
-        <td>${escapeHTML(sub.delegation_purpose || sub.scope || 'ephemeral')}</td>
-        <td class="tabular-nums" style="font-size: 12px;">${exp ? exp.toLocaleTimeString() : 'N/A'}</td>
+        <td><div><span class="code-span code-span-sm tabular-nums">${escapeHTML(parentDID)}</span></div></td>
+        <td>${escapeHTML(scopeText)}</td>
+        <td class="cell-sub tabular-nums">${exp ? exp.toLocaleTimeString() : 'N/A'}</td>
       </tr>`;
   }).join('');
 }
@@ -297,8 +358,10 @@ function setStepperState(state) {
     case 'ERROR':
       if (steps[0]) steps[0].className = 'step-node failed';
       break;
+    case 'IDLE':
+    case '':
+      break;
     default:
-      if (steps[0]) steps[0].className = 'step-node active';
       break;
   }
 }
@@ -327,12 +390,12 @@ function renderJuryCallout(verdict) {
     el.setAttribute('data-engine', 'DETERMINISTIC_MULTI_FACTOR');
     el.innerHTML = `
       <h4>AI Audit Jury: Deterministic Fallback Consensus</h4>
-      <div style="margin: var(--space-2) 0;">
+      <div class="badge-row">
         <span class="badge badge-degraded">DETERMINISTIC_MULTI_FACTOR FALLBACK</span>
         <span class="badge badge-t1">WINNER: ${escapeHTML(winner)}</span>
       </div>
-      <p style="font-size: var(--text-sm); color: var(--text-muted);">${escapeHTML(rationale)}</p>
-      <div style="font-size: 11px; color: var(--status-degraded-fg); margin-top: var(--space-1);">
+      <p>${escapeHTML(rationale)}</p>
+      <div class="jury-callout-note">
         Notice: Remote DGX Spark LLM was offline or unconfigured. Dispute was resolved deterministically via multi-factor evidence (hardware POS receipts, physical BLE beacons, and bilateral attendance claims).
       </div>`;
     announceSR(`Dispute arbitrated via DETERMINISTIC_MULTI_FACTOR fallback consensus. Winner: ${winner}`);
@@ -341,11 +404,11 @@ function renderJuryCallout(verdict) {
     el.setAttribute('data-engine', 'DGX_SPARK_LLM');
     el.innerHTML = `
       <h4>AI Audit Jury: High-Fidelity LLM Arbitration</h4>
-      <div style="margin: var(--space-2) 0;">
+      <div class="badge-row">
         <span class="badge badge-success">DGX_SPARK_LLM ARBITRATED</span>
         <span class="badge badge-t1">WINNER: ${escapeHTML(winner)}</span>
       </div>
-      <p style="font-size: var(--text-sm); color: var(--text-muted);">${escapeHTML(rationale)}</p>`;
+      <p>${escapeHTML(rationale)}</p>`;
     announceSR(`Dispute arbitrated via DGX_SPARK_LLM. Winner: ${winner}`);
   }
 }
@@ -384,52 +447,52 @@ function renderSimMetrics(scenario, metrics) {
     rows.push({
       metric: 'Sybil Average Reputation Score',
       input: 'Circular wash-trading attempts',
-      observed: Number(m.sybil_avg_score || 0).toFixed(2),
+      observed: Number(m.sybil_avg_score !== undefined ? m.sybil_avg_score : 0).toFixed(2),
       contract: 'Must remain <= 2.50',
-      status: Number(m.sybil_avg_score || 0) <= 2.5 ? '[PASS]' : '[FAIL]'
+      status: Number(m.sybil_avg_score !== undefined ? m.sybil_avg_score : 0) <= 2.5 ? '[PASS]' : '[FAIL]'
     });
     rows.push({
       metric: 'Honest Agent Average Score',
       input: 'Verified bookings & bonds',
-      observed: Number(m.honest_avg_score || 4.5).toFixed(2),
+      observed: Number(m.honest_avg_score !== undefined ? m.honest_avg_score : 4.5).toFixed(2),
       contract: 'Must achieve >= 4.20',
-      status: Number(m.honest_avg_score || 4.5) >= 4.2 ? '[PASS]' : '[FAIL]'
+      status: Number(m.honest_avg_score !== undefined ? m.honest_avg_score : 4.5) >= 4.2 ? '[PASS]' : '[FAIL]'
     });
   } else if (scenario === 'whale-attack') {
     rows.push({
       metric: 'Whale Capital Deposited',
       input: '$1,000,000.00 capital spike',
-      observed: fmtUSD(m.whale_deposit_usd || 1000000),
+      observed: fmtUSD(m.whale_deposit_usd !== undefined ? m.whale_deposit_usd : 1000000),
       contract: 'Unbonded capital injection',
       status: '[OK]'
     });
     rows.push({
       metric: 'Attempted Concurrent Bookings',
       input: '500 concurrent $100 bookings',
-      observed: String(m.attempted_concurrent_bookings || 500),
+      observed: String(m.attempted_concurrent_bookings !== undefined ? m.attempted_concurrent_bookings : 500),
       contract: 'Instantaneous flash booking burst',
       status: '[OK]'
     });
     rows.push({
       metric: 'Velocity Capacity at t=0',
       input: 'Immediate dispatch attempt',
-      observed: fmtUSD(m.velocity_capacity_t0_usd || 0),
+      observed: fmtUSD(m.velocity_capacity_t0_usd !== undefined ? m.velocity_capacity_t0_usd : 0),
       contract: 'Must equal $0.00 (zero tenure)',
-      status: Number(m.velocity_capacity_t0_usd || 0) === 0 ? '[PASS]' : '[FAIL]'
+      status: Number(m.velocity_capacity_t0_usd !== undefined ? m.velocity_capacity_t0_usd : 0) === 0 ? '[PASS]' : '[FAIL]'
     });
     rows.push({
       metric: 'Bookings Blocked at t=0',
       input: 'Pre-answer trust gating',
-      observed: `${m.blocked_bookings_at_t0 || 500} / ${m.attempted_concurrent_bookings || 500}`,
+      observed: `${m.blocked_bookings_at_t0 !== undefined ? m.blocked_bookings_at_t0 : 500} / ${m.attempted_concurrent_bookings !== undefined ? m.attempted_concurrent_bookings : 500}`,
       contract: 'Must block >= 498 bookings',
-      status: Number(m.blocked_bookings_at_t0 || 0) >= 498 ? '[PASS]' : '[FAIL]'
+      status: Number(m.blocked_bookings_at_t0 !== undefined ? m.blocked_bookings_at_t0 : 0) >= 498 ? '[PASS]' : '[FAIL]'
     });
     rows.push({
       metric: 'Mature Capacity at Day 30',
       input: '30-day longitudinal tenure',
-      observed: fmtUSD(m.velocity_capacity_day30_usd || 50000),
+      observed: fmtUSD(m.velocity_capacity_day30_usd !== undefined ? m.velocity_capacity_day30_usd : 50000),
       contract: 'Scales to >= $50,000.00',
-      status: Number(m.velocity_capacity_day30_usd || 0) >= 50000 ? '[PASS]' : '[FAIL]'
+      status: Number(m.velocity_capacity_day30_usd !== undefined ? m.velocity_capacity_day30_usd : 0) >= 50000 ? '[PASS]' : '[FAIL]'
     });
   } else if (scenario === 'collusive-vendor') {
     const isDisputed = m.oracle_status === 'STATUS_DISPUTED' || m.oracle_status === 'DISPUTED';
@@ -461,8 +524,8 @@ function renderSimMetrics(scenario, metrics) {
       contract: 'Must be SLASHED',
       status: m.vendor_slashed ? '[PASS]' : '[FAIL]'
     });
-    const beforeRep = Number(m.vendor_reputation_before || 4.5);
-    const afterRep = Number(m.vendor_reputation_after || 2.0);
+    const beforeRep = Number(m.vendor_reputation_before !== undefined ? m.vendor_reputation_before : 4.5);
+    const afterRep = Number(m.vendor_reputation_after !== undefined ? m.vendor_reputation_after : 2.0);
     rows.push({
       metric: 'Vendor Reputation Degradation',
       input: 'Adverse arbitration outcome',
@@ -479,10 +542,10 @@ function renderSimMetrics(scenario, metrics) {
 
     return `
       <tr>
-        <td style="font-weight: 600;">${escapeHTML(r.metric)}</td>
-        <td style="color: var(--text-dim);">${escapeHTML(r.input)}</td>
-        <td class="tabular-nums" style="font-family: var(--font-mono); color: var(--accent-blue);">${escapeHTML(r.observed)}</td>
-        <td style="font-size: 12px; color: var(--text-dim);">${escapeHTML(r.contract)}</td>
+        <td class="sim-metric-cell">${escapeHTML(r.metric)}</td>
+        <td class="sim-dim-cell tabular-nums">${escapeHTML(r.input)}</td>
+        <td class="sim-observed-cell tabular-nums">${escapeHTML(r.observed)}</td>
+        <td class="sim-dim-cell tabular-nums">${escapeHTML(r.contract)}</td>
         <td><span class="badge ${badgeClass}">${escapeHTML(r.status)}</span></td>
       </tr>`;
   }).join('');

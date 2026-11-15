@@ -145,21 +145,12 @@ function initGlobalShortcuts() {
 // 5. Quick Directory Filter Controller
 function filterAgents(query) {
   activeFilterQuery = String(query || '').trim();
-  renderAgentsTable(cachedRootAgents, activeFilterQuery);
+  const matches = renderAgentsTable(cachedRootAgents, activeFilterQuery);
 
   const total = cachedRootAgents.length;
   if (!activeFilterQuery) {
     setBannerState('directory-status-banner', 'nominal', `Directory ready. Showing all ${total} registered agents.`, false);
   } else {
-    const q = activeFilterQuery.toLowerCase();
-    const matches = cachedRootAgents.filter(item => {
-      const a = item.agent || item;
-      const name = (a.display_name || '').toLowerCase();
-      const did = (a.root_did || '').toLowerCase();
-      const tier = `tier ${a.trust_tier || 0}`.toLowerCase();
-      const role = a.is_vendor ? 'vendor' : 'user';
-      return name.includes(q) || did.includes(q) || tier.includes(q) || role.includes(q);
-    }).length;
     setBannerState('directory-status-banner', 'nominal', `Filter active: ${matches} of ${total} agents match "${activeFilterQuery}".`, false);
   }
 }
@@ -181,6 +172,7 @@ async function refreshOverview() {
   if (pillStatus) {
     pillStatus.textContent = 'SYNCING...';
     pillStatus.className = 'pill-val blue';
+    pillStatus.setAttribute('data-state', 'loading');
   }
 
   try {
@@ -189,6 +181,7 @@ async function refreshOverview() {
       throw new Error(`HTTP ${res.status}: ${res.statusText}`);
     }
     const data = await res.json();
+    const escrow = data.escrow || {};
 
     currentMerkleRoot = data.merkle_root || '';
     const rootShort = currentMerkleRoot ? currentMerkleRoot.substring(0, 10) + '...' : 'EMPTY';
@@ -197,46 +190,58 @@ async function refreshOverview() {
     if (elMerklePill) elMerklePill.textContent = rootShort;
 
     const elRegPill = document.getElementById('pill-registered-agents');
-    if (elRegPill) elRegPill.textContent = String(data.registered_root_agents || 0);
+    if (elRegPill) elRegPill.textContent = String(data.registered_agents || 0);
 
     const elSubPill = document.getElementById('pill-sub-agents');
     if (elSubPill) elSubPill.textContent = String(data.active_sub_agents || 0);
 
     const elLockPill = document.getElementById('pill-escrow-locked');
-    if (elLockPill) elLockPill.textContent = fmtUSD(data.total_locked_escrow_usd);
+    if (elLockPill) elLockPill.textContent = fmtUSD(escrow.total_locked_usd);
 
     const elFeesPill = document.getElementById('pill-treasury-fees');
-    if (elFeesPill) elFeesPill.textContent = fmtUSD(data.total_treasury_fees_usd);
+    if (elFeesPill) elFeesPill.textContent = fmtUSD(escrow.treasury_fees_usd);
 
     const elStatLocked = document.getElementById('stat-locked-usd');
-    if (elStatLocked) elStatLocked.textContent = fmtUSD(data.total_locked_escrow_usd);
+    if (elStatLocked) elStatLocked.textContent = fmtUSD(escrow.total_locked_usd);
 
     const elStatAvail = document.getElementById('stat-avail-usd');
-    if (elStatAvail) elStatAvail.textContent = fmtUSD(data.total_available_collateral_usd);
+    if (elStatAvail) elStatAvail.textContent = fmtUSD(escrow.total_available_usd);
 
     const elStatFees = document.getElementById('stat-fees-usd');
-    if (elStatFees) elStatFees.textContent = fmtUSD(data.total_treasury_fees_usd);
+    if (elStatFees) elStatFees.textContent = fmtUSD(escrow.treasury_fees_usd);
 
     const elStatSlashed = document.getElementById('stat-slashed-usd');
-    if (elStatSlashed) elStatSlashed.textContent = fmtUSD(data.total_slashed_collateral_usd);
+    if (elStatSlashed) elStatSlashed.textContent = fmtUSD(escrow.total_slashed_usd);
 
     const elLedgerRoot = document.getElementById('merkle-ledger-root');
     if (elLedgerRoot) elLedgerRoot.textContent = currentMerkleRoot || 'EMPTY';
 
-    if (pillStatus) {
-      pillStatus.textContent = 'ONLINE';
-      pillStatus.className = 'pill-val green';
-      pillStatus.setAttribute('data-state', 'nominal');
-    }
+    const [agentsOk, ledgerOk] = await Promise.all([fetchAgents(), fetchMerkleLedger()]);
 
-    await Promise.all([fetchAgents(), fetchMerkleLedger()]);
+    if (pillStatus) {
+      if (agentsOk && ledgerOk) {
+        pillStatus.textContent = 'ONLINE';
+        pillStatus.className = 'pill-val green';
+        pillStatus.setAttribute('data-state', 'nominal');
+      } else {
+        pillStatus.textContent = 'DEGRADED';
+        pillStatus.className = 'pill-val amber';
+        pillStatus.setAttribute('data-state', 'degraded');
+      }
+    }
   } catch (err) {
     if (pillStatus) {
       pillStatus.textContent = 'DEGRADED';
       pillStatus.className = 'pill-val amber';
       pillStatus.setAttribute('data-state', 'degraded');
     }
-    setBannerState('directory-status-banner', 'error', `Overview telemetry synchronization failed: ${err.message}`, true);
+    setBannerState(
+      'directory-status-banner',
+      'error',
+      `Overview telemetry synchronization failed: ${err.message}`,
+      true,
+      { onRetry: refreshOverview, dismissible: true }
+    );
   }
 }
 
@@ -257,8 +262,26 @@ async function fetchAgents() {
     renderAgentsTable(cachedRootAgents, activeFilterQuery);
     renderSubAgentsTable(cachedSubAgents);
     populateAgentDropdowns(cachedRootAgents, cachedSubAgents);
+    return true;
   } catch (err) {
-    setBannerState('directory-status-banner', 'error', `Failed to load agent directory: ${err.message}`, true);
+    const agentsBody = document.getElementById('agents-table-body');
+    if (agentsBody) {
+      agentsBody.setAttribute('aria-busy', 'false');
+      agentsBody.innerHTML = '<tr data-state="error"><td colspan="5" class="table-error-cell">Failed to load registered root agents.</td></tr>';
+    }
+    const subBody = document.getElementById('subagents-table-body');
+    if (subBody) {
+      subBody.setAttribute('aria-busy', 'false');
+      subBody.innerHTML = '<tr data-state="error"><td colspan="4" class="table-error-cell">Failed to load rotating sub-agents.</td></tr>';
+    }
+    setBannerState(
+      'directory-status-banner',
+      'error',
+      `Failed to load agent directory: ${err.message}`,
+      true,
+      { onRetry: refreshOverview, dismissible: true }
+    );
+    return false;
   }
 }
 
@@ -414,8 +437,11 @@ async function handleRelayBooking(e) {
         badge.textContent = 'ERROR';
         badge.setAttribute('data-state', 'error');
       }
-      setBannerState('relay-result-summary', 'error', `Booking negotiation failed: ${session.error || res.statusText}`, true);
-      if (sendBtn) sendBtn.style.display = 'none';
+      setBannerState('relay-result-summary', 'error', `Booking negotiation failed: ${session.error || res.statusText}`, true, { dismissible: true });
+      if (sendBtn) {
+        sendBtn.hidden = true;
+        sendBtn.setAttribute('hidden', '');
+      }
       return;
     }
 
@@ -428,8 +454,18 @@ async function handleRelayBooking(e) {
       }
       lastConfirmedRelaySession = session;
       window.lastConfirmedRelaySession = session;
-      setBannerState('relay-result-summary', 'nominal', `Booking confirmed. Lock ID: ${session.lock_id}. Sealed escrow: ${fmtUSD(session.locked_bond_usd || payload.bond_amount_usd)}. Fee: ${fmtUSD(session.protocol_fee_usd)}.`, false);
-      if (sendBtn) sendBtn.style.display = 'inline-block';
+      const sealedUSD = session.bond_amount_usd !== undefined ? session.bond_amount_usd : payload.bond_amount_usd;
+      const passportNote = session.passport_id ? ` TrustPassport: ${session.passport_id}.` : '';
+      setBannerState(
+        'relay-result-summary',
+        'nominal',
+        `Booking confirmed. Lock ID: ${session.lock_id}. Sealed escrow: ${fmtUSD(sealedUSD)}.${passportNote}`,
+        false
+      );
+      if (sendBtn) {
+        sendBtn.hidden = false;
+        sendBtn.removeAttribute('hidden');
+      }
     } else {
       setStepperState('REJECTED_LOW_TRUST');
       if (badge) {
@@ -438,7 +474,10 @@ async function handleRelayBooking(e) {
         badge.setAttribute('data-state', 'degraded');
       }
       setBannerState('relay-result-summary', 'degraded', `Booking handshake rejected: ${session.rejection_reason || 'Trust gate threshold not satisfied.'}`, false);
-      if (sendBtn) sendBtn.style.display = 'none';
+      if (sendBtn) {
+        sendBtn.hidden = true;
+        sendBtn.setAttribute('hidden', '');
+      }
     }
 
     await refreshOverview();
@@ -449,8 +488,11 @@ async function handleRelayBooking(e) {
       badge.textContent = 'TRANSPORT ERROR';
       badge.setAttribute('data-state', 'error');
     }
-    setBannerState('relay-result-summary', 'error', `Booking transport error: ${err.message}`, true);
-    if (sendBtn) sendBtn.style.display = 'none';
+    setBannerState('relay-result-summary', 'error', `Booking transport error: ${err.message}`, true, { dismissible: true });
+    if (sendBtn) {
+      sendBtn.hidden = true;
+      sendBtn.setAttribute('hidden', '');
+    }
   }
 }
 
@@ -463,11 +505,14 @@ function prefillOracleFromRelay() {
   const s = lastConfirmedRelaySession || window.lastConfirmedRelaySession;
   if (!s) return;
 
+  const apptInput = document.getElementById('orc-appt-id');
+  if (apptInput && s.appointment_id) apptInput.value = s.appointment_id;
+
   const lockInput = document.getElementById('settle-lock-id');
   if (lockInput) lockInput.value = s.lock_id || '';
 
   const amtInput = document.getElementById('settle-amount');
-  if (amtInput && s.locked_bond_usd) amtInput.value = s.locked_bond_usd;
+  if (amtInput && s.bond_amount_usd) amtInput.value = s.bond_amount_usd;
 
   const userSelect = document.getElementById('orc-user-did');
   if (userSelect && s.caller_did) userSelect.value = s.caller_did;
@@ -496,6 +541,11 @@ async function handleIssueNonce(e) {
 
   const nonceDisplay = document.getElementById('orc-nonce-display');
   const statusEl = document.getElementById('orc-nonce-status');
+  if (statusEl) {
+    statusEl.className = 'badge badge-t1';
+    statusEl.textContent = 'ISSUING...';
+    statusEl.setAttribute('data-state', 'loading');
+  }
 
   try {
     const res = await fetch('/api/v1/oracle/challenge', {
@@ -605,7 +655,8 @@ async function handleOracleSettle(e) {
     badge.setAttribute('data-state', 'loading');
   }
 
-  const nonceVal = activeNonceValue || (document.getElementById('orc-nonce-display')?.textContent || '').trim();
+  const rawDisplayedNonce = (document.getElementById('orc-nonce-display')?.textContent || '').trim();
+  const nonceVal = activeNonceValue || (rawDisplayedNonce && rawDisplayedNonce !== 'None Issued' ? rawDisplayedNonce : '');
 
   const payload = {
     appointment_id: (document.getElementById('orc-appt-id')?.value || '').trim(),
@@ -641,12 +692,30 @@ async function handleOracleSettle(e) {
         badge.textContent = 'SETTLEMENT FAILED';
         badge.setAttribute('data-state', 'error');
       }
-      setBannerState('settle-result-summary', 'error', `Settlement execution failed: ${data.error || res.statusText}`, true);
+      setBannerState('settle-result-summary', 'error', `Settlement execution failed: ${data.error || res.statusText}`, true, { dismissible: true });
       renderJuryCallout(null);
       return;
     }
 
+    // Consume active single-use nonce and stop countdown cleanly
+    if (activeNonceInterval) {
+      clearInterval(activeNonceInterval);
+      activeNonceInterval = null;
+    }
+    activeNonceValue = '';
+    window.activeNonceValue = '';
+    const timerEl = document.getElementById('orc-nonce-timer');
+    const statusEl = document.getElementById('orc-nonce-status');
+    if (timerEl) timerEl.textContent = 'CONSUMED';
+    if (statusEl) {
+      statusEl.className = 'badge badge-t1';
+      statusEl.textContent = 'CONSUMED';
+      statusEl.setAttribute('data-state', 'empty');
+    }
+
     const outcome = data.outcome || {};
+    const receipt = data.receipt || {};
+    const merkleShort = data.merkle_root ? data.merkle_root.substring(0, 10) + '...' : 'UNAVAILABLE';
     renderJuryCallout(data.verdict);
 
     if (outcome.status === 'STATUS_SUCCESS') {
@@ -655,14 +724,24 @@ async function handleOracleSettle(e) {
         badge.textContent = 'STATUS_SUCCESS (MUTUAL ARRIVAL)';
         badge.setAttribute('data-state', 'nominal');
       }
-      setBannerState('settle-result-summary', 'nominal', `Mutual arrival confirmed. Released: ${fmtUSD(outcome.released_to_vendor_usd)}. Refunded: ${fmtUSD(outcome.refunded_to_user_usd)}. Merkle record appended.`, false);
+      setBannerState(
+        'settle-result-summary',
+        'nominal',
+        `Mutual arrival confirmed. Released to user: ${fmtUSD(receipt.released_to_user_usd)}. Integrity fee: ${fmtUSD(receipt.network_integrity_fee_usd)}. Merkle root: ${merkleShort}`,
+        false
+      );
     } else if (outcome.status === 'STATUS_SLASHED') {
       if (badge) {
         badge.className = 'badge badge-danger';
         badge.textContent = 'STATUS_SLASHED (NO-SHOW)';
         badge.setAttribute('data-state', 'error');
       }
-      setBannerState('settle-result-summary', 'error', `User no-show recorded. Slashed: ${fmtUSD(outcome.slashed_collateral_usd)}. Transferred to vendor: ${fmtUSD(outcome.released_to_vendor_usd)}.`, false);
+      setBannerState(
+        'settle-result-summary',
+        'error',
+        `Party slashed. Deducted good-behavior bond: ${fmtUSD(receipt.good_behavior_bond_deducted_usd)}. Vendor compensation: ${fmtUSD(receipt.vendor_compensation_usd)}. Honest reporter reward: ${fmtUSD(outcome.honest_reporter_reward_usd)}.`,
+        false
+      );
     } else if (outcome.status === 'STATUS_DISPUTED') {
       if (badge) {
         badge.className = 'badge badge-warning';
@@ -670,7 +749,12 @@ async function handleOracleSettle(e) {
         badge.textContent = `STATUS_DISPUTED (JURY: ${winner})`;
         badge.setAttribute('data-state', 'degraded');
       }
-      setBannerState('settle-result-summary', 'degraded', `Dispute resolved via AI Jury. Released to vendor: ${fmtUSD(outcome.released_to_vendor_usd)}. Refunded to user: ${fmtUSD(outcome.refunded_to_user_usd)}.`, false);
+      setBannerState(
+        'settle-result-summary',
+        'degraded',
+        `Dispute resolved via AI Jury. Released to user: ${fmtUSD(receipt.released_to_user_usd)}. Vendor compensation: ${fmtUSD(receipt.vendor_compensation_usd)}. Arbitration fee: ${fmtUSD(receipt.network_arbitration_fee_usd)}.`,
+        false
+      );
     }
 
     await refreshOverview();
@@ -680,7 +764,7 @@ async function handleOracleSettle(e) {
       badge.textContent = 'TRANSPORT ERROR';
       badge.setAttribute('data-state', 'error');
     }
-    setBannerState('settle-result-summary', 'error', `Settlement transport error: ${err.message}`, true);
+    setBannerState('settle-result-summary', 'error', `Settlement transport error: ${err.message}`, true, { dismissible: true });
     renderJuryCallout(null);
   }
 }
@@ -696,9 +780,9 @@ async function handleIssuePassport(e) {
 
   const payload = {
     subject_did: document.getElementById('pass-subject')?.value || '',
-    min_fulfillment_rate: parseFloat(document.getElementById('pass-min-ful')?.value) || 0.8,
-    min_settled_bookings: parseInt(document.getElementById('pass-min-book')?.value, 10) || 2,
-    min_trust_tier: parseInt(document.getElementById('pass-min-tier')?.value, 10) || 2
+    req_min_fulfillment: parseFloat(document.getElementById('pass-min-ful')?.value) || 0.8,
+    req_min_bookings: parseInt(document.getElementById('pass-min-book')?.value, 10) || 2,
+    req_min_tier: parseInt(document.getElementById('pass-min-tier')?.value, 10) || 2
   };
 
   const jsonViewer = document.getElementById('passport-json');
@@ -717,8 +801,11 @@ async function handleIssuePassport(e) {
     }
 
     if (!res.ok) {
-      setBannerState('passport-status-banner', 'error', `Passport issuance rejected: ${data.error || res.statusText}`, true);
-      if (verifyBtn) verifyBtn.style.display = 'none';
+      setBannerState('passport-status-banner', 'error', `Passport issuance rejected: ${data.error || res.statusText}`, true, { dismissible: true });
+      if (verifyBtn) {
+        verifyBtn.hidden = true;
+        verifyBtn.setAttribute('hidden', '');
+      }
       return;
     }
 
@@ -726,10 +813,16 @@ async function handleIssuePassport(e) {
     window.lastIssuedPassport = lastIssuedPassport;
 
     setBannerState('passport-status-banner', 'nominal', `TrustPassport issued. ID: ${lastIssuedPassport.passport_id}. Enclave ECDSA signature sealed.`, false);
-    if (verifyBtn) verifyBtn.style.display = 'inline-block';
+    if (verifyBtn) {
+      verifyBtn.hidden = false;
+      verifyBtn.removeAttribute('hidden');
+    }
   } catch (err) {
-    setBannerState('passport-status-banner', 'error', `Passport issuance transport error: ${err.message}`, true);
-    if (verifyBtn) verifyBtn.style.display = 'none';
+    setBannerState('passport-status-banner', 'error', `Passport issuance transport error: ${err.message}`, true, { dismissible: true });
+    if (verifyBtn) {
+      verifyBtn.hidden = true;
+      verifyBtn.setAttribute('hidden', '');
+    }
   }
 }
 
@@ -750,24 +843,26 @@ async function handleVerifyPassport() {
     });
     const data = await res.json();
 
-    if (!res.ok || !data.verified) {
-      setBannerState('passport-status-banner', 'error', `Verification failed: ${data.error || 'Cryptographic signature invalid.'}`, true);
+    if (!res.ok || !data.valid) {
+      setBannerState('passport-status-banner', 'error', `Verification failed: ${data.error || 'Cryptographic signature invalid.'}`, true, { dismissible: true });
       return;
     }
 
     // Check if passport was anchored against a historical Merkle root vs current head
-    const passportRoot = data.passport?.merkle_root || passport.merkle_root || '';
+    const passportRoot = data.merkle_root || passport.merkle_root || '';
     if (currentMerkleRoot && passportRoot && passportRoot !== currentMerkleRoot) {
       setBannerState('passport-status-banner', 'degraded', `VERIFIED (HISTORICAL SNAPSHOT): Valid enclave ECDSA signature under prior Merkle root (${passportRoot.substring(0, 10)}...).`, false);
     } else {
       setBannerState('passport-status-banner', 'nominal', `VERIFIED: Valid enclave ECDSA attestation under Merkle root ${passportRoot.substring(0, 10)}...`, false);
     }
   } catch (err) {
-    setBannerState('passport-status-banner', 'error', `Verification request error: ${err.message}`, true);
+    setBannerState('passport-status-banner', 'error', `Verification request error: ${err.message}`, true, { dismissible: true });
   }
 }
 
 async function fetchMerkleLedger() {
+  renderTableSkeleton('merkle-records-tbody', 6, 4);
+
   try {
     const res = await fetch('/api/v1/ledger/merkle');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -778,11 +873,12 @@ async function fetchMerkleLedger() {
     if (elRoot) elRoot.textContent = currentMerkleRoot || 'EMPTY';
 
     const tbody = document.getElementById('merkle-records-tbody');
-    if (!tbody) return;
+    if (!tbody) return true;
+    tbody.setAttribute('aria-busy', 'false');
 
     if (!data.records || data.records.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-dim); padding: var(--space-4);">No Merkle interaction records logged.</td></tr>';
-      return;
+      tbody.innerHTML = '<tr data-state="empty"><td colspan="6" class="table-empty-cell">No Merkle interaction records logged.</td></tr>';
+      return true;
     }
 
     tbody.innerHTML = data.records.map((r, idx) => {
@@ -791,18 +887,33 @@ async function fetchMerkleLedger() {
       if ((r.status || '').includes('SLASHED')) statusBadge = `<span class="badge badge-danger">${escapeHTML(r.status)}</span>`;
       if ((r.status || '').includes('DISPUTED')) statusBadge = `<span class="badge badge-warning">${escapeHTML(r.status)}</span>`;
 
+      const actorDID = r.sub_agent_did || r.user_root_did || r.caller_did || '';
+
       return `
         <tr>
-          <td class="tabular-nums">${idx}</td>
-          <td><span class="code-span tabular-nums">${escapeHTML(r.record_id || 'rec-' + idx)}</span></td>
+          <td class="num tabular-nums">${idx}</td>
+          <td><span class="code-span code-span-sm tabular-nums">${escapeHTML(r.record_id || 'rec-' + idx)}</span></td>
           <td>${statusBadge}</td>
-          <td><span class="code-span tabular-nums">${escapeHTML(r.caller_did ? r.caller_did.substring(0, 16) + '...' : '-')}</span></td>
-          <td class="tabular-nums" style="font-weight: 600;">${fmtUSD(r.amount_usd)}</td>
-          <td class="tabular-nums" style="font-size: 11px; color: var(--text-dim);">${r.timestamp ? new Date(r.timestamp).toLocaleTimeString() : 'N/A'}</td>
+          <td><span class="code-span code-span-sm tabular-nums">${escapeHTML(actorDID ? actorDID.substring(0, 18) + '...' : '-')}</span></td>
+          <td class="num cell-primary tabular-nums">${fmtUSD(r.amount_usd)}</td>
+          <td class="cell-sub tabular-nums">${r.timestamp ? new Date(r.timestamp).toLocaleTimeString() : 'N/A'}</td>
         </tr>`;
     }).join('');
+    return true;
   } catch (err) {
-    console.error('Failed to fetch Merkle ledger:', err);
+    const tbody = document.getElementById('merkle-records-tbody');
+    if (tbody) {
+      tbody.setAttribute('aria-busy', 'false');
+      tbody.innerHTML = '<tr data-state="error"><td colspan="6" class="table-error-cell">Failed to load Merkle interaction records.</td></tr>';
+    }
+    setBannerState(
+      'merkle-proof-status',
+      'error',
+      `Failed to synchronize Merkle ledger: ${err.message}`,
+      true,
+      { onRetry: fetchMerkleLedger, dismissible: true }
+    );
+    return false;
   }
 }
 
@@ -822,13 +933,26 @@ async function auditMerkleProof(e) {
     }
 
     if (!res.ok) {
-      setBannerState('merkle-proof-status', 'error', `Audit failed: ${data.error || res.statusText}`, true);
+      setBannerState('merkle-proof-status', 'error', `Audit failed: ${data.error || res.statusText}`, true, { dismissible: true });
+      return;
+    }
+
+    if (!data.inclusion_proof) {
+      const count = Array.isArray(data.records) ? data.records.length : 0;
+      const rangeMsg = count > 0 ? `Valid index range: 0 to ${count - 1}.` : 'Ledger currently contains 0 records.';
+      setBannerState(
+        'merkle-proof-status',
+        'error',
+        `Leaf index ${idx} is out of bounds. ${rangeMsg}`,
+        true,
+        { dismissible: true }
+      );
       return;
     }
 
     setBannerState('merkle-proof-status', 'nominal', `Cryptographic proof verified. Leaf index ${idx} anchored to root ${data.merkle_root?.substring(0, 10)}...`, false);
   } catch (err) {
-    setBannerState('merkle-proof-status', 'error', `Merkle audit request error: ${err.message}`, true);
+    setBannerState('merkle-proof-status', 'error', `Merkle audit request error: ${err.message}`, true, { dismissible: true });
   }
 }
 
@@ -849,6 +973,7 @@ async function runSimulation(scenario) {
   renderTableSkeleton('sim-metrics-tbody', 5, 5);
 
   const jsonViewer = document.getElementById('sim-json');
+  const tbody = document.getElementById('sim-metrics-tbody');
 
   try {
     const res = await fetch(`/api/v1/simulate/${encodeURIComponent(scenario)}`, {
@@ -861,12 +986,22 @@ async function runSimulation(scenario) {
     }
 
     if (!res.ok) {
+      if (tbody) {
+        tbody.setAttribute('aria-busy', 'false');
+        tbody.innerHTML = '<tr data-state="error"><td colspan="5" class="table-error-cell">Simulation failed to execute. Inspect summary banner to retry.</td></tr>';
+      }
       if (badge) {
         badge.className = 'badge badge-danger';
         badge.textContent = 'SIMULATION ERROR';
         badge.setAttribute('data-state', 'error');
       }
-      setBannerState('sim-summary', 'error', `Simulation failed: ${data.error || res.statusText}`, true);
+      setBannerState(
+        'sim-summary',
+        'error',
+        `Simulation failed: ${data.error || res.statusText}`,
+        true,
+        { onRetry: () => runSimulation(scenario), dismissible: true }
+      );
       return;
     }
 
@@ -879,18 +1014,29 @@ async function runSimulation(scenario) {
       badge.setAttribute('data-state', succeeded ? 'nominal' : 'error');
     }
 
-    const isDegradedJury = (scenario === 'collusive-vendor' && data.metrics?.jury_engine === 'DETERMINISTIC_MULTI_FACTOR');
+    const juryEngine = String(data.metrics?.jury_engine || (scenario === 'collusive-vendor' ? 'DETERMINISTIC_MULTI_FACTOR' : ''));
+    const isDegradedJury = (scenario === 'collusive-vendor' && (!juryEngine || juryEngine === 'DETERMINISTIC_MULTI_FACTOR'));
     const stateStr = isDegradedJury ? 'degraded' : (succeeded ? 'nominal' : 'error');
 
     setBannerState('sim-summary', stateStr, `Scenario "${data.scenario}" completed in ${duration}. ${data.summary || ''}`, !succeeded);
     renderSimMetrics(scenario, data.metrics || {});
   } catch (err) {
+    if (tbody) {
+      tbody.setAttribute('aria-busy', 'false');
+      tbody.innerHTML = '<tr data-state="error"><td colspan="5" class="table-error-cell">Simulation request failed due to transport error.</td></tr>';
+    }
     if (badge) {
       badge.className = 'badge badge-danger';
       badge.textContent = 'TRANSPORT ERROR';
       badge.setAttribute('data-state', 'error');
     }
-    setBannerState('sim-summary', 'error', `Simulation transport error: ${err.message}`, true);
+    setBannerState(
+      'sim-summary',
+      'error',
+      `Simulation transport error: ${err.message}`,
+      true,
+      { onRetry: () => runSimulation(scenario), dismissible: true }
+    );
   }
 }
 

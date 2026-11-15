@@ -85,6 +85,8 @@ func TestUIJS_ViewsModuleServedAndContract(t *testing.T) {
 		{"Hybrid AI jury callout renderer", "function renderJuryCallout"},
 		{"Adversarial simulation metrics renderer", "function renderSimMetrics"},
 		{"Sub-agent wire-protocol field normalization", "sub.sub_did"},
+		{"Sub-agent purpose wire field", "sub.purpose"},
+		{"Shared agent directory filter helper", "function matchesAgentFilter"},
 		{"Deterministic multi-factor jury fallback engine", "DETERMINISTIC_MULTI_FACTOR"},
 		{"DGX Spark nominal remote jury engine", "DGX_SPARK_LLM"},
 		{"Skeleton row class", "skeleton-row"},
@@ -97,6 +99,11 @@ func TestUIJS_ViewsModuleServedAndContract(t *testing.T) {
 				t.Fatalf("/ui/views.js missing required snippet %q (%s)", tc.snippet, tc.desc)
 			}
 		})
+	}
+
+	// Gate 3 invariant: zero inline style attributes inside rendered templates
+	if strings.Contains(content, `style="`) {
+		t.Errorf("/ui/views.js contains inline style= attribute; use components.css classes")
 	}
 
 	// Invariant: zero alert() or window.alert() calls
@@ -188,6 +195,14 @@ func TestUIJS_AppControllerServedAndContract(t *testing.T) {
 		{"Merkle inclusion proof auditor", "auditMerkleProof"},
 		{"Adversarial threat simulator executor", "runSimulation"},
 		{"Session state wire-protocol normalization", "session.state || session.status"},
+		{"Overview registered_agents wire field", "data.registered_agents"},
+		{"Overview escrow.total_locked_usd wire field", "escrow.total_locked_usd"},
+		{"Relay bond_amount_usd wire field", "bond_amount_usd"},
+		{"Settlement receipt released_to_user_usd field", "receipt.released_to_user_usd"},
+		{"Passport req_min_fulfillment wire field", "req_min_fulfillment"},
+		{"Passport verify data.valid wire field", "data.valid"},
+		{"Merkle InteractionRecord user_root_did wire field", "r.user_root_did"},
+		{"Merkle out-of-bounds inclusion_proof check", "!data.inclusion_proof"},
 	}
 
 	for _, tc := range requiredSnippets {
@@ -196,6 +211,11 @@ func TestUIJS_AppControllerServedAndContract(t *testing.T) {
 				t.Fatalf("/ui/app.js missing required snippet %q (%s)", tc.snippet, tc.desc)
 			}
 		})
+	}
+
+	// Gate 3 invariant: zero inline style attributes
+	if strings.Contains(content, `style="`) {
+		t.Errorf("/ui/app.js contains inline style= attribute; use components.css classes")
 	}
 
 	// Invariant: zero alert() or window.alert() calls

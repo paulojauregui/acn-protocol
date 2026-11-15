@@ -129,7 +129,10 @@ func TestUIHTML_LandmarksAndWAIARIATabs(t *testing.T) {
 		t.Error("index.html missing <header role=\"banner\"> landmark")
 	}
 
-	// Tablist navigation
+	// Navigation landmark wrapping WAI-ARIA tablist
+	if !strings.Contains(content, `<nav class="tab-bar" role="navigation"`) {
+		t.Error("index.html missing <nav class=\"tab-bar\" role=\"navigation\"> landmark wrapping tablist")
+	}
 	if !strings.Contains(content, `role="tablist"`) || !strings.Contains(content, `id="console-tablist"`) {
 		t.Error("index.html missing WAI-ARIA tablist container with id=\"console-tablist\"")
 	}
@@ -370,5 +373,10 @@ func TestUIHTML_LiveRegionsAndCanonicalIDs(t *testing.T) {
 				t.Fatalf("missing canonical DOM ID %q in index.html", cid)
 			}
 		})
+	}
+
+	// Gate 3 invariant: zero inline style attributes in index.html
+	if strings.Contains(content, "style=") {
+		t.Error("index.html contains inline style= attributes; extract styles into components.css tokens/classes")
 	}
 }
