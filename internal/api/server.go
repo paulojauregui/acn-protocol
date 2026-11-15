@@ -3,7 +3,7 @@
 package api
 
 import (
-	_ "embed"
+	"embed"
 	"net/http"
 	"time"
 
@@ -16,8 +16,14 @@ import (
 	"github.com/paulojauregui/acn-protocol/internal/reputation"
 )
 
-//go:embed ui/index.html
-var uiIndexHTML []byte
+// uiFS embeds every static asset under internal/api/ui (index.html, tokens.css,
+// components.css, and any future stylesheets or scripts).
+//
+// Pre-conditions: the ui/ directory exists at build time alongside this package.
+// Post-conditions: provides read-only access to embedded assets via uiFS.ReadFile.
+//
+//go:embed ui/*
+var uiFS embed.FS
 
 // Server is the HTTP/2 REST and Connect-style RPC control-plane server for the ACN protocol.
 //
@@ -91,6 +97,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // Post-conditions: all protocol endpoints are registered on s.Mux.
 func (s *Server) registerRoutes() {
 	s.Mux.HandleFunc("GET /{$}", s.handleRoot)
+	s.Mux.HandleFunc("GET /ui/{asset...}", s.handleUIAsset)
 	s.Mux.HandleFunc("GET /healthz", s.handleHealthz)
 	s.Mux.HandleFunc("GET /ready", s.handleReady)
 	s.Mux.HandleFunc("GET /api/v1/overview", s.handleOverview)
